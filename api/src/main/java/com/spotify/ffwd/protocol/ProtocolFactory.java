@@ -17,10 +17,10 @@ package com.spotify.ffwd.protocol;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.google.common.base.Supplier;
 import lombok.Data;
 
 import java.net.InetSocketAddress;
+import java.util.function.Supplier;
 
 /**
  * Data type suitable for building using a @JsonCreator block.
@@ -54,12 +54,7 @@ public class ProtocolFactory {
      * @return
      */
     public static Supplier<ProtocolFactory> defaultFor() {
-        return new Supplier<ProtocolFactory>() {
-            @Override
-            public ProtocolFactory get() {
-                return new ProtocolFactory(null, null, null, null);
-            }
-        };
+        return () -> new ProtocolFactory(null, null, null, null);
     }
 
     /**

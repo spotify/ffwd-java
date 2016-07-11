@@ -19,10 +19,11 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.google.common.base.Optional;
-import com.google.common.base.Supplier;
 import com.spotify.ffwd.model.Event;
 import com.spotify.ffwd.model.Metric;
+
+import java.util.Optional;
+import java.util.function.Supplier;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes({
@@ -49,15 +50,6 @@ public interface KafkaPartitioner {
         public int partition(final Metric metric) {
             return metric.getHost().hashCode();
         }
-
-        public static Supplier<KafkaPartitioner> supplier() {
-            return new Supplier<KafkaPartitioner>() {
-                @Override
-                public KafkaPartitioner get() {
-                    return new Host();
-                }
-            };
-        }
     }
 
     class Tag implements KafkaPartitioner {
@@ -67,7 +59,7 @@ public interface KafkaPartitioner {
 
         @JsonCreator
         public Tag(@JsonProperty("tag") final String tagKey) {
-            this.tagKey = Optional.fromNullable(tagKey).or(DEFAULT_TAGKEY);
+            this.tagKey = Optional.ofNullable(tagKey).orElse(DEFAULT_TAGKEY);
         }
 
         @Override
@@ -95,12 +87,7 @@ public interface KafkaPartitioner {
         }
 
         public static Supplier<KafkaPartitioner> supplier() {
-            return new Supplier<KafkaPartitioner>() {
-                @Override
-                public KafkaPartitioner get() {
-                    return new Tag(null);
-                }
-            };
+            return () -> new Tag(null);
         }
     }
 
@@ -120,12 +107,7 @@ public interface KafkaPartitioner {
         }
 
         public static Supplier<KafkaPartitioner> supplier() {
-            return new Supplier<KafkaPartitioner>() {
-                @Override
-                public KafkaPartitioner get() {
-                    return new Hashed();
-                }
-            };
+            return Hashed::new;
         }
     }
 }

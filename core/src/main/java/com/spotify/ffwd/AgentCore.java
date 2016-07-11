@@ -18,8 +18,10 @@ package com.spotify.ffwd;
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.AbstractModule;
@@ -352,6 +354,8 @@ public class AgentCore {
             early.getInstance(Key.get(SimpleModule.class, Names.named("application/yaml+config")));
 
         mapper.registerModule(module);
+        mapper.registerModule(new Jdk8Module());
+        mapper.disable(SerializationFeature.FAIL_ON_EMPTY_BEANS);
 
         try (final InputStream input = Files.newInputStream(this.config)) {
             return mapper.readValue(input, AgentConfig.class);

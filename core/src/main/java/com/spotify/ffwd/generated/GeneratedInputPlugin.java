@@ -29,8 +29,8 @@ public class GeneratedInputPlugin implements InputPlugin {
     private final boolean sameHost;
 
     @JsonCreator
-    public GeneratedInputPlugin(@JsonProperty("sameHost") Boolean sameHost) {
-        this.sameHost = Optional.ofNullable(sameHost).orElse(false);
+    public GeneratedInputPlugin(@JsonProperty("sameHost") Optional<Boolean> sameHost) {
+        this.sameHost = sameHost.orElse(false);
     }
 
     @Override

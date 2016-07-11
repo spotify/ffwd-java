@@ -50,22 +50,21 @@ public class KafkaOutputPlugin implements OutputPlugin {
 
     @JsonCreator
     public KafkaOutputPlugin(
-        @JsonProperty("producer") Map<String, String> properties,
-        @JsonProperty("flushInterval") Long flushInterval,
-        @JsonProperty("router") KafkaRouter router,
-        @JsonProperty("partitioner") KafkaPartitioner partitioner,
-        @JsonProperty("serializer") Serializer serializer,
-        @JsonProperty("batchSize") Integer batchSize,
-        @JsonProperty("compression") Boolean compression
+        @JsonProperty("producer") Optional<Map<String, String>> properties,
+        @JsonProperty("flushInterval") Optional<Long> flushInterval,
+        @JsonProperty("router") Optional<KafkaRouter> router,
+        @JsonProperty("partitioner") Optional<KafkaPartitioner> partitioner,
+        @JsonProperty("serializer") Optional<Serializer> serializer,
+        @JsonProperty("batchSize") Optional<Integer> batchSize,
+        @JsonProperty("compression") Optional<Boolean> compression
     ) {
-        this.router = Optional.ofNullable(router).orElseGet(KafkaRouter.Tag.supplier());
-        this.partitioner = Optional.ofNullable(partitioner)
-                                   .orElseGet(KafkaPartitioner.Host::new);
-        this.flushInterval = Optional.ofNullable(flushInterval);
-        this.properties = Optional.ofNullable(properties).orElseGet(HashMap::new);
-        this.serializer = Optional.ofNullable(serializer);
-        this.batchSize = Optional.ofNullable(batchSize).orElse(DEFAULT_BATCH_SIZE);
-        this.compression = Optional.ofNullable(compression).orElse(DEFAULT_COMPRESSION);
+        this.router = router.orElseGet(KafkaRouter.Tag.supplier());
+        this.partitioner = partitioner.orElseGet(KafkaPartitioner.Host::new);
+        this.flushInterval = flushInterval;
+        this.properties = properties.orElseGet(HashMap::new);
+        this.serializer = serializer;
+        this.batchSize = batchSize.orElse(DEFAULT_BATCH_SIZE);
+        this.compression = compression.orElse(DEFAULT_COMPRESSION);
     }
 
     @Override

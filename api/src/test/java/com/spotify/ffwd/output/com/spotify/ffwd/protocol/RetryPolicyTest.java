@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.util.Optional;
 
 /**
  * Created by parmus on 29-01-16.
@@ -33,7 +34,10 @@ public class RetryPolicyTest {
         final long initial = 2L;
         final long max = initial * 5;
 
-        RetryPolicy.Linear policy = new RetryPolicy.Linear(initial, max);
+        RetryPolicy.Linear policy = new RetryPolicy.Linear(
+            Optional.of(initial),
+            Optional.of(max)
+        );
 
         // The delay should ramp up regularly
         for(int i=0; i<5; i++){
@@ -52,7 +56,10 @@ public class RetryPolicyTest {
         final long initial = 2L;
         final long max = ((long) Math.pow(2, 5) * initial) - 1;
 
-        RetryPolicy.Exponential policy = new RetryPolicy.Exponential(initial, max);
+        RetryPolicy.Exponential policy = new RetryPolicy.Exponential(
+            Optional.of(initial),
+            Optional.of(max)
+        );
 
         // The delay should ramp up regularly
         for(int i=0; i<5; i++){

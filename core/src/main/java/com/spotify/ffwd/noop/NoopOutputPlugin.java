@@ -36,8 +36,8 @@ public class NoopOutputPlugin implements OutputPlugin {
     private final Long flushInterval;
 
     @JsonCreator
-    public NoopOutputPlugin(@JsonProperty("flushInterval") Long flushInterval) {
-        this.flushInterval = Optional.ofNullable(flushInterval).orElse(DEFAULT_FLUSH_INTERVAL);
+    public NoopOutputPlugin(@JsonProperty("flushInterval") Optional<Long> flushInterval) {
+        this.flushInterval = flushInterval.orElse(DEFAULT_FLUSH_INTERVAL);
     }
 
     @Override

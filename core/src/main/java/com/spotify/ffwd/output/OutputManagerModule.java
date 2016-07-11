@@ -47,10 +47,11 @@ public class OutputManagerModule {
 
     @JsonCreator
     public OutputManagerModule(
-        @JsonProperty("plugins") List<OutputPlugin> plugins, @JsonProperty("filter") Filter filter
+        @JsonProperty("plugins") Optional<List<OutputPlugin>> plugins,
+        @JsonProperty("filter") Optional<Filter> filter
     ) {
-        this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
-        this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);
+        this.plugins = plugins.orElse(DEFAULT_PLUGINS);
+        this.filter = filter.orElseGet(TrueFilter::new);
     }
 
     public Module module() {

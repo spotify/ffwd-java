@@ -59,30 +59,31 @@ public class AgentConfig {
 
     @JsonCreator
     public AgentConfig(
-        @JsonProperty("debug") Debug debug, @JsonProperty("host") String host,
-        @JsonProperty("tags") Map<String, String> tags,
-        @JsonProperty("riemannTags") Set<String> riemannTags,
-        @JsonProperty("input") InputManagerModule input,
-        @JsonProperty("output") OutputManagerModule output,
-        @JsonProperty("asyncThreads") Integer asyncThreads,
-        @JsonProperty("schedulerThreads") Integer schedulerThreads,
-        @JsonProperty("bossThreads") Integer bossThreads,
-        @JsonProperty("workerThreads") Integer workerThreads, @JsonProperty("ttl") Long ttl,
-        @JsonProperty("qlog") String qlog
+        @JsonProperty("debug") Optional<Debug> debug,
+        @JsonProperty("host") Optional<String> host,
+        @JsonProperty("tags") Optional<Map<String, String>> tags,
+        @JsonProperty("riemannTags") Optional<Set<String>> riemannTags,
+        @JsonProperty("input") Optional<InputManagerModule> input,
+        @JsonProperty("output") Optional<OutputManagerModule> output,
+        @JsonProperty("asyncThreads") Optional<Integer> asyncThreads,
+        @JsonProperty("schedulerThreads") Optional<Integer> schedulerThreads,
+        @JsonProperty("bossThreads") Optional<Integer> bossThreads,
+        @JsonProperty("workerThreads") Optional<Integer> workerThreads,
+        @JsonProperty("ttl") Optional<Long> ttl,
+        @JsonProperty("qlog") Optional<String> qlog
     ) {
-        this.debug = Optional.ofNullable(debug);
-        this.host = Optional.ofNullable(host).orElseGet(this::buildDefaultHost);
-        this.tags = Optional.ofNullable(tags).orElse(DEFAULT_TAGS);
-        this.riemannTags = Optional.ofNullable(riemannTags).orElse(DEFAULT_RIEMANNTAGS);
-        this.input = Optional.ofNullable(input).orElseGet(InputManagerModule.supplyDefault());
-        this.output = Optional.ofNullable(output).orElseGet(OutputManagerModule.supplyDefault());
-        this.asyncThreads = Optional.ofNullable(asyncThreads).orElse(DEFAULT_ASYNC_THREADS);
-        this.schedulerThreads =
-            Optional.ofNullable(schedulerThreads).orElse(DEFAULT_SCHEDULER_THREADS);
-        this.bossThreads = Optional.ofNullable(bossThreads).orElse(DEFAULT_BOSS_THREADS);
-        this.workerThreads = Optional.ofNullable(workerThreads).orElse(DEFAULT_WORKER_THREADS);
-        this.ttl = Optional.ofNullable(ttl).orElse(0L);
-        this.qlog = Paths.get(Optional.ofNullable(qlog).orElse(DEFAULT_QLOG));
+        this.debug = debug;
+        this.host = host.orElseGet(this::buildDefaultHost);
+        this.tags = tags.orElse(DEFAULT_TAGS);
+        this.riemannTags = riemannTags.orElse(DEFAULT_RIEMANNTAGS);
+        this.input = input.orElseGet(InputManagerModule.supplyDefault());
+        this.output = output.orElseGet(OutputManagerModule.supplyDefault());
+        this.asyncThreads = asyncThreads.orElse(DEFAULT_ASYNC_THREADS);
+        this.schedulerThreads = schedulerThreads.orElse(DEFAULT_SCHEDULER_THREADS);
+        this.bossThreads = bossThreads.orElse(DEFAULT_BOSS_THREADS);
+        this.workerThreads = workerThreads.orElse(DEFAULT_WORKER_THREADS);
+        this.ttl = ttl.orElse(0L);
+        this.qlog = Paths.get(qlog.orElse(DEFAULT_QLOG));
     }
 
     private String buildDefaultHost() {
@@ -101,9 +102,14 @@ public class AgentConfig {
         private final InetSocketAddress localAddress;
 
         @JsonCreator
-        public Debug(@JsonProperty("host") String host, @JsonProperty("port") Integer port) {
-            this.localAddress = buildLocalAddress(Optional.ofNullable(host).orElse(DEFAULT_HOST),
-                Optional.ofNullable(port).orElse(DEFAULT_PORT));
+        public Debug(
+            @JsonProperty("host") Optional<String> host,
+            @JsonProperty("port") Optional<Integer> port
+        ) {
+            this.localAddress = buildLocalAddress(
+                host.orElse(DEFAULT_HOST),
+                port.orElse(DEFAULT_PORT)
+            );
         }
 
         private InetSocketAddress buildLocalAddress(String host, Integer port) {

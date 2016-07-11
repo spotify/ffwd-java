@@ -47,18 +47,18 @@ public class CarbonInputPlugin implements InputPlugin {
 
     @JsonCreator
     public CarbonInputPlugin(
-        @JsonProperty("protocol") final ProtocolFactory protocol,
-        @JsonProperty("delimiter") final String delimiter,
-        @JsonProperty("retry") final RetryPolicy retry, @JsonProperty("key") final String key
+        @JsonProperty("protocol") final Optional<ProtocolFactory> protocolFactory,
+        @JsonProperty("delimiter") final Optional<String> delimiter,
+        @JsonProperty("retry") final Optional<RetryPolicy> retry,
+        @JsonProperty("key") final Optional<String> key
     ) {
-        this.protocol = Optional
-            .ofNullable(protocol)
+        this.protocol = protocolFactory
             .orElseGet(ProtocolFactory.defaultFor())
             .protocol(DEFAULT_PROTOCOL, DEFAULT_PORT);
         this.protocolServer =
-            parseProtocolServer(Optional.ofNullable(delimiter).orElseGet(this::defaultDelimiter));
-        this.retry = Optional.ofNullable(retry).orElseGet(RetryPolicy.Exponential::new);
-        this.metricKey = Optional.ofNullable(key).orElse(DEFAULT_KEY);
+            parseProtocolServer(delimiter.orElseGet(this::defaultDelimiter));
+        this.retry = retry.orElseGet(RetryPolicy.Exponential::new);
+        this.metricKey = key.orElse(DEFAULT_KEY);
     }
 
     private String defaultDelimiter() {

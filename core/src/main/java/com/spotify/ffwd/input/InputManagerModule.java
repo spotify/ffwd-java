@@ -45,10 +45,11 @@ public class InputManagerModule {
 
     @JsonCreator
     public InputManagerModule(
-        @JsonProperty("plugins") List<InputPlugin> plugins, @JsonProperty("filter") Filter filter
+        @JsonProperty("plugins") Optional<List<InputPlugin>> plugins,
+        @JsonProperty("filter") Optional<Filter> filter
     ) {
-        this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
-        this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);
+        this.plugins = plugins.orElse(DEFAULT_PLUGINS);
+        this.filter = filter.orElseGet(TrueFilter::new);
     }
 
     public Module module() {

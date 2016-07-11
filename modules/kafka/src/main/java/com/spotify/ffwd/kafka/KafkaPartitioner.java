@@ -58,8 +58,8 @@ public interface KafkaPartitioner {
         private final String tagKey;
 
         @JsonCreator
-        public Tag(@JsonProperty("tag") final String tagKey) {
-            this.tagKey = Optional.ofNullable(tagKey).orElse(DEFAULT_TAGKEY);
+        public Tag(@JsonProperty("tag") final Optional<String> tagKey) {
+            this.tagKey = tagKey.orElse(DEFAULT_TAGKEY);
         }
 
         @Override

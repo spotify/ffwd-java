@@ -46,16 +46,16 @@ public class JsonInputPlugin implements InputPlugin {
 
     @JsonCreator
     public JsonInputPlugin(
-        @JsonProperty("protocol") ProtocolFactory protocol,
-        @JsonProperty("delimiter") String delimiter, @JsonProperty("retry") RetryPolicy retry
+        @JsonProperty("protocol") Optional<ProtocolFactory> protocolFactory,
+        @JsonProperty("delimiter") Optional<String> delimiter,
+        @JsonProperty("retry") Optional<RetryPolicy> retry
     ) {
-        this.protocol = Optional
-            .ofNullable(protocol)
+        this.protocol = protocolFactory
             .orElseGet(ProtocolFactory.defaultFor())
             .protocol(DEFAULT_PROTOCOL, DEFAULT_PORT);
         this.protocolServer =
-            parseProtocolServer(Optional.ofNullable(delimiter).orElseGet(this::defaultDelimiter));
-        this.retry = Optional.ofNullable(retry).orElseGet(RetryPolicy.Exponential::new);
+            parseProtocolServer(delimiter.orElseGet(this::defaultDelimiter));
+        this.retry = retry.orElseGet(RetryPolicy.Exponential::new);
     }
 
     private String defaultDelimiter() {

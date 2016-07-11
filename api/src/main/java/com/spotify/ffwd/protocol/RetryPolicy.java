@@ -50,8 +50,8 @@ public interface RetryPolicy {
         private final long value;
 
         @JsonCreator
-        public Constant(@JsonProperty("value") Long value) {
-            this.value = Optional.ofNullable(value).orElse(DEFAULT_VALUE);
+        public Constant(@JsonProperty("value") Optional<Long> value) {
+            this.value = value.orElse(DEFAULT_VALUE);
         }
 
         @Override
@@ -74,9 +74,12 @@ public interface RetryPolicy {
         private final int maxAttempt;
 
         @JsonCreator
-        public Exponential(@JsonProperty("initial") Long initial, @JsonProperty("max") Long max) {
-            this.initial = Optional.ofNullable(initial).orElse(DEFAULT_INITIAL);
-            this.max = Optional.ofNullable(max).orElse(DEFAULT_MAX);
+        public Exponential(
+            @JsonProperty("initial") Optional<Long> initial,
+            @JsonProperty("max") Optional<Long> max
+        ) {
+            this.initial = initial.orElse(DEFAULT_INITIAL);
+            this.max = max.orElse(DEFAULT_MAX);
             this.maxAttempt =
                 new Double(Math.floor(Math.log(this.max / this.initial) / Math.log(2))).intValue();
         }
@@ -107,9 +110,12 @@ public interface RetryPolicy {
         private final int maxAttempt;
 
         @JsonCreator
-        public Linear(@JsonProperty("value") Long value, @JsonProperty("max") Long max) {
-            this.value = Optional.ofNullable(value).orElse(DEFAULT_VALUE);
-            this.max = Optional.ofNullable(max).orElse(DEFAULT_MAX);
+        public Linear(
+            @JsonProperty("value") Optional<Long> value,
+            @JsonProperty("max") Optional<Long> max
+        ) {
+            this.value = value.orElse(DEFAULT_VALUE);
+            this.max = max.orElse(DEFAULT_MAX);
             this.maxAttempt = (int) ((this.max / this.value) - 1);
         }
 

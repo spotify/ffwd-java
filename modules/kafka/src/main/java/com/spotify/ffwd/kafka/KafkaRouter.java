@@ -47,12 +47,13 @@ public interface KafkaRouter {
 
         @JsonCreator
         public Tag(
-            @JsonProperty("tag") final String tagKey, @JsonProperty("metrics") String metrics,
-            @JsonProperty("events") String events
+            @JsonProperty("tag") final Optional<String> tagKey,
+            @JsonProperty("metrics") Optional<String> metrics,
+            @JsonProperty("events") Optional<String> events
         ) {
-            this.tagKey = Optional.ofNullable(tagKey).orElse(DEFAULT_TAGKEY);
-            this.metrics = Optional.ofNullable(metrics).orElse(DEFAULT_METRICS);
-            this.events = Optional.ofNullable(events).orElse(DEFAULT_EVENTS);
+            this.tagKey = tagKey.orElse(DEFAULT_TAGKEY);
+            this.metrics = metrics.orElse(DEFAULT_METRICS);
+            this.events = events.orElse(DEFAULT_EVENTS);
         }
 
         @Override
@@ -91,10 +92,11 @@ public interface KafkaRouter {
 
         @JsonCreator
         public Static(
-            @JsonProperty("metrics") String metrics, @JsonProperty("events") String events
+            @JsonProperty("metrics") Optional<String> metrics,
+            @JsonProperty("events") Optional<String> events
         ) {
-            this.metrics = Optional.ofNullable(metrics).orElse(DEFAULT_METRICS);
-            this.events = Optional.ofNullable(events).orElse(DEFAULT_EVENTS);
+            this.metrics = metrics.orElse(DEFAULT_METRICS);
+            this.events = events.orElse(DEFAULT_EVENTS);
         }
 
         @Override

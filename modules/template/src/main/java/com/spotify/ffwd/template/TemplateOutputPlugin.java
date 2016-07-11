@@ -42,14 +42,13 @@ public class TemplateOutputPlugin implements OutputPlugin {
 
     @JsonCreator
     public TemplateOutputPlugin(
-        @JsonProperty("protocol") final ProtocolFactory protocol,
-        @JsonProperty("retry") final RetryPolicy retry
+        @JsonProperty("protocol") final Optional<ProtocolFactory> protocolFactory,
+        @JsonProperty("retry") final Optional<RetryPolicy> retry
     ) {
-        this.protocol = Optional
-            .ofNullable(protocol)
+        this.protocol = protocolFactory
             .orElseGet(ProtocolFactory.defaultFor())
             .protocol(DEFAULT_PROTOCOL, DEFAULT_PORT);
-        this.retry = Optional.ofNullable(retry).orElseGet(RetryPolicy.Exponential::new);
+        this.retry = retry.orElseGet(RetryPolicy.Exponential::new);
     }
 
     @Override

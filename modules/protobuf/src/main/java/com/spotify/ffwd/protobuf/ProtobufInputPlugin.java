@@ -42,14 +42,14 @@ public class ProtobufInputPlugin implements InputPlugin {
 
     @JsonCreator
     public ProtobufInputPlugin(
-        @JsonProperty("protocol") ProtocolFactory protocol, @JsonProperty("retry") RetryPolicy retry
+        @JsonProperty("protocol") Optional<ProtocolFactory> protocolFactory,
+        @JsonProperty("retry") Optional<RetryPolicy> retry
     ) {
-        this.protocol = Optional
-            .ofNullable(protocol)
+        this.protocol = protocolFactory
             .orElseGet(ProtocolFactory.defaultFor())
             .protocol(DEFAULT_PROTOCOL, DEFAULT_PORT);
         this.protocolServer = parseProtocolServer();
-        this.retry = Optional.ofNullable(retry).orElseGet(RetryPolicy.Exponential::new);
+        this.retry = retry.orElseGet(RetryPolicy.Exponential::new);
     }
 
     private Class<? extends ProtocolServer> parseProtocolServer() {

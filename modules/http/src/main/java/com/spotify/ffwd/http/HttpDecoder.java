@@ -93,7 +93,7 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
         ctx
             .channel()
             .writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK))
-            .addListener((ChannelFutureListener) future -> future.channel().close());
+            .addListener((ChannelFutureListener) future -> future.channel());
     }
 
     private void getPing(
@@ -102,6 +102,6 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
         ctx
             .channel()
             .writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK))
-            .addListener((ChannelFutureListener) future -> future.channel().close());
+            .addListener((ChannelFutureListener) future -> future.channel());
     }
 }

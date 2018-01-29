@@ -32,22 +32,11 @@ public abstract class OutputPlugin {
     protected final Batching batching;
     protected final Optional<Filter> filter;
 
-    public OutputPlugin() {
-        filter = Optional.empty();
-        batching = Batching.empty();
-    }
-
     public OutputPlugin(
         final Optional<Filter> filter, final Batching batching
     ) {
         this.filter = filter;
         this.batching = batching;
-        if (filter == null) {
-            throw new RuntimeException("filter can't be null");
-        }
-        if (batching == null) {
-            throw new RuntimeException("batching can't be null");
-        }
     }
 
     /**

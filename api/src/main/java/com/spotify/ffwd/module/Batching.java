@@ -47,6 +47,23 @@ public class Batching {
         return from(flushInterval, batching, Optional.empty());
     }
 
+    /**
+     * This method exists to create a unified interface for configuration batching. This object
+     * hides a compatibility path to the old way of specifying flushInterval (outside of a
+     * 'batching' block).
+     * <p>
+     * BatchingPluginSink can be placed in front of any output plugin. Different output plugins
+     * might use different configuration for their batching. This class contains all configuration
+     * for batching, and may be specified for every output plugin.
+     *
+     * @param flushInterval Optional configuration on the output plugin level in the configuration.
+     * This only contains something when the user didn't use any 'batching' sub structure in the
+     * configuration, and just specified flushInterval.
+     * @param batching A complete Batching structure, on the output plugin level in the conf.
+     * @param defaultFlushInterval Optional default value to be used if no flushInterval nor
+     * batching was specified.
+     * @return A Batching object.
+     */
     public static Batching from(
         final Optional<Long> flushInterval, final Optional<Batching> batching,
         final Optional<Long> defaultFlushInterval

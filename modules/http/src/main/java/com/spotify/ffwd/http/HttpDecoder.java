@@ -60,10 +60,10 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
                         postBatch(ctx, in, out);
                         return;
                     }
-		    log.error("Unsupported Media Type");
+                    log.error("Unsupported Media Type");
                     throw new HttpException(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
                 }
-		log.error("HTTP Method Not Allowed");
+                log.error("HTTP Method Not Allowed");
                 throw new HttpException(HttpResponseStatus.METHOD_NOT_ALLOWED);
             default:
                 /* do nothing */

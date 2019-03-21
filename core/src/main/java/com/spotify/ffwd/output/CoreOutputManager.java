@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward Core
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd.output;
 
 import com.google.common.collect.Lists;
@@ -28,18 +33,24 @@ import com.spotify.ffwd.model.Metric;
 import com.spotify.ffwd.statistics.OutputManagerStatistics;
 import eu.toolchain.async.AsyncFramework;
 import eu.toolchain.async.AsyncFuture;
+import java.util.AbstractMap.SimpleImmutableEntry;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class CoreOutputManager implements OutputManager {
     private static final String DEBUG_ID = "core.output";
+    private static final String HOST = "host";
 
     @Inject
+    @Getter
     private List<PluginSink> sinks;
 
     @Inject
@@ -48,6 +59,10 @@ public class CoreOutputManager implements OutputManager {
     @Inject
     @Named("tags")
     private Map<String, String> tags;
+
+    @Inject
+    @Named("tagsToResource")
+    private Map<String, String> tagsToResource;
 
     @Inject
     @Named("resource")
@@ -60,6 +75,10 @@ public class CoreOutputManager implements OutputManager {
     @Inject
     @Named("skipTagsForKeys")
     private Set<String> skipTagsForKeys;
+
+    @Inject
+    @Named("automaticHostTag")
+    private Boolean automaticHostTag;
 
     @Inject
     @Named("host")
@@ -192,16 +211,19 @@ public class CoreOutputManager implements OutputManager {
     private Metric filter(final Metric metric) {
         final Date time = metric.getTime() != null ? metric.getTime() : new Date();
 
-        final Map<String, String> mergedTags = selectTags(metric);
-        final String host = selectHost(metric);
+        final Map<String, String> tags = selectTags(metric);
+        final Map<String, String> commonResource = Maps.newHashMap(resource);
+        commonResource.putAll(metric.getResource());
 
-        final Map<String, String> mergedResource = Maps.newHashMap(resource);
-        mergedResource.putAll(metric.getResource());
+        final SimpleImmutableEntry<Map<String, String>, Map<String, String>>
+            tagsAndResources = processTagsToResource(tags, commonResource);
+        final Map<String, String> mergedTags = tagsAndResources.getKey();
+        final Map<String, String> mergedResource = tagsAndResources.getValue();
 
         final Set<String> mergedRiemannTags = Sets.newHashSet(riemannTags);
         mergedRiemannTags.addAll(metric.getRiemannTags());
 
-        return new Metric(metric.getKey(), metric.getValue(), time, host, mergedRiemannTags,
+        return new Metric(metric.getKey(), metric.getValue(), time, mergedRiemannTags,
             mergedTags, mergedResource, metric.getProc());
     }
 
@@ -209,41 +231,81 @@ public class CoreOutputManager implements OutputManager {
      * Filter the provided Batch and complete fields.
      */
     private Batch filter(final Batch batch) {
-        final Map<String, String> mergedCommonResource;
-        if (batch.getCommonResource().isEmpty()) {
-            mergedCommonResource = resource;
-        } else {
-            mergedCommonResource = Maps.newHashMap(resource);
-            mergedCommonResource.putAll(batch.getCommonResource());
-        }
+        final Map<String, String> commonTags = Maps.newHashMap(tags);
+        commonTags.putAll(batch.getCommonTags());
 
-        final Map<String, String> mergedCommonTags;
-        if (batch.getCommonTags().isEmpty()) {
-            mergedCommonTags = tags;
-        } else {
-            mergedCommonTags = Maps.newHashMap(tags);
-            mergedCommonTags.putAll(batch.getCommonTags());
-        }
+        final Map<String, String> commonResource = Maps.newHashMap(resource);
+        commonResource.putAll(batch.getCommonResource());
 
-        return new Batch(mergedCommonTags, mergedCommonResource, batch.getPoints());
+        final SimpleImmutableEntry<Map<String, String>, Map<String, String>>
+            tagsAndResources = processTagsToResource(commonTags, commonResource);
+        final Map<String, String> mergedCommonTags = tagsAndResources.getKey();
+        final Map<String, String> mergedCommonResource = tagsAndResources.getValue();
+
+        final List<Batch.Point> points = batch.getPoints().stream().map(point -> {
+            final Map<String, String> pointTags = point.getTags();
+            final Map<String, String> pointResource = point.getResource();
+
+            final SimpleImmutableEntry<Map<String, String>, Map<String, String>>
+                pointTagsAndResources = processTagsToResource(pointTags, pointResource);
+            final Map<String, String> mergedTags = pointTagsAndResources.getKey();
+            final Map<String, String> mergedResource = pointTagsAndResources.getValue();
+
+            return new Batch.Point(
+                point.getKey(),
+                mergedTags,
+                mergedResource,
+                point.getValue(),
+                point.getTimestamp());
+
+        }).collect(Collectors.toList());
+
+        return new Batch(mergedCommonTags, mergedCommonResource, points);
     }
 
     private Map<String, String> selectTags(Metric metric) {
-        if (skipTagsForKeys.contains(metric.getKey()) || tags.isEmpty()) {
+        if (skipTagsForKeys.contains(metric.getKey())) {
             return metric.getTags();
         }
 
         final Map<String, String> mergedTags;
         mergedTags = Maps.newHashMap(tags);
         mergedTags.putAll(metric.getTags());
+
+        if (automaticHostTag) {
+            mergedTags.putIfAbsent(HOST, this.host);
+        }
+
         return mergedTags;
     }
 
-    private String selectHost(Metric metric) {
-        if (skipTagsForKeys.contains(metric.getKey())) {
-            return metric.getHost();
+    /**
+     * Potentially convert some tags to resource identifiers - i.e. tags in tagsToResource conf.
+     *
+     * If there are conflicts, the existing resource identifiers takes precedence over tags.
+     *
+     * @param tags Map of tags that will be used when constructing a metric
+     * @param resource Map of resource identifiers that will be used when constructing a metric
+     */
+    private SimpleImmutableEntry<Map<String, String>, Map<String, String>> processTagsToResource(
+        final Map<String, String> tags, final Map<String, String> resource
+    ) {
+        if (tagsToResource.isEmpty()) {
+            return new SimpleImmutableEntry<>(tags, resource);
         }
 
-        return metric.getHost() != null ? metric.getHost() : this.host;
+        final Map<String, String> mergedResources = new HashMap<>(resource);
+        final Map<String, String> strippedTags = new HashMap<>(tags);
+
+        tagsToResource.forEach((fromTag, toResource) -> {
+            final String tag = strippedTags.remove(fromTag);
+            // Set as resource if the tag exists and there were not already a resource with the
+            // wanted name
+            if (tag != null) {
+                mergedResources.putIfAbsent(toResource, tag);
+            }
+        });
+
+        return new SimpleImmutableEntry<>(strippedTags, mergedResources);
     }
 }

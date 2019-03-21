@@ -1,0 +1,37 @@
+input:
+  plugins:
+    - type: json
+      protocol:
+        type: tcp
+    - type: json
+      protocol:
+        type: udp
+        receiveBufferSize: 26214400
+    - type: protobuf
+      protocol:
+        type: udp
+        receiveBufferSize: 26214400
+    - type: protobuf
+      protocol:
+        type: tcp
+    - type: http
+      protocol:
+        type: tcp
+
+output:
+  plugins:
+    - type: debug
+    - type: pubsub
+      serializer:
+        type: spotify100proto
+
+      batching:
+        flushInterval: 10000
+        batchSizeLimit: 10000  # Default: 10000
+        maxPendingFlushes: 10 # Default: 10
+
+      project: google-test-project
+      topic: test-topic
+      requestBytesThreshold: 25000 # Default: 5000
+      messageCountBatchSize: 10 # Default: 1000
+      publishDelayThresholdMs: 200 # Default: 200

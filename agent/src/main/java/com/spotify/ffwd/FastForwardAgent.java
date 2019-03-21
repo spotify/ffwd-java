@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward Agent
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd;
 
 import com.spotify.ffwd.module.FastForwardModule;
@@ -24,16 +29,36 @@ import com.spotify.metrics.jvm.GarbageCollectorMetricSet;
 import com.spotify.metrics.jvm.MemoryUsageGaugeSet;
 import com.spotify.metrics.jvm.ThreadStatesMetricSet;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Data
 public class FastForwardAgent {
+    private final Statistics statistics;
+    private final AgentCore core;
+
     public static void main(String[] argv) {
+        Optional<Path> path = Optional.empty();
+        if (argv.length > 0) {
+            path = Optional.of(Paths.get(argv[0]));
+        }
+
+        final FastForwardAgent agent = setup(path, Optional.empty());
+        run(agent);
+    }
+
+    public static FastForwardAgent setup(
+        final Optional<Path> configPath, final Optional<InputStream> configStream
+    ) {
         // needed for HTTP content decompression in:
         // com.spotify.ffwd.http.HttpModule
         System.setProperty("io.netty.noJdkZlibDecoder", "false");
@@ -44,14 +69,15 @@ public class FastForwardAgent {
             System.exit(2);
         });
 
-        final Statistics s;
+        final Statistics statistics;
 
         try {
-            s = setupStatistics();
+            statistics = setupStatistics();
         } catch (Exception e) {
             log.error("Failed to setup statistics", e);
             System.exit(1);
-            return;
+            // Make IDEA happy
+            return null;
         }
 
         final List<Class<? extends FastForwardModule>> modules = new ArrayList<>();
@@ -71,26 +97,30 @@ public class FastForwardAgent {
         modules.add(com.spotify.ffwd.template.TemplateOutputModule.class);
         modules.add(com.spotify.ffwd.signalfx.SignalFxModule.class);
         modules.add(com.spotify.ffwd.http.HttpModule.class);
+        modules.add(com.spotify.ffwd.pubsub.PubsubOutputModule.class);
 
         final AgentCore.Builder builder = AgentCore.builder().modules(modules);
 
-        if (argv.length > 0) {
-            builder.config(Paths.get(argv[0]));
-        }
-
-        builder.statistics(s.statistics);
+        builder.statistics(statistics.statistics);
+        configStream.map(builder::configStream);
+        configPath.map(builder::configPath);
 
         final AgentCore core = builder.build();
+        final FastForwardAgent agent = new FastForwardAgent(statistics, core);
 
+        return agent;
+    }
+
+    public static void run(final FastForwardAgent agent) {
         try {
-            core.run();
+            agent.getCore().run();
         } catch (Exception e) {
             log.error("Error in agent, exiting", e);
             System.exit(1);
             return;
         }
 
-        s.stop();
+        agent.getStatistics().stop();
         System.exit(0);
     }
 

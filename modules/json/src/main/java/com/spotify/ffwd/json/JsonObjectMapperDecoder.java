@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward JSON Module
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd.json;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -39,6 +44,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 @Sharable
 public class JsonObjectMapperDecoder extends MessageToMessageDecoder<ByteBuf> {
+    private static final String HOST = "host";
     public static final Set<String> EMPTY_TAGS = Sets.newHashSet();
     public static final Map<String, String> EMPTY_ATTRIBUTES = new HashMap<>();
 
@@ -104,14 +111,16 @@ public class JsonObjectMapperDecoder extends MessageToMessageDecoder<ByteBuf> {
         final String key = decodeString(tree, "key");
         final double value = decodeDouble(tree, "value");
         final Date time = decodeTime(tree, "time");
-        final String host = decodeString(tree, "host");
+        final Optional<String> host = Optional.ofNullable(decodeString(tree, HOST));
         final Set<String> riemannTags = decodeTags(tree, "tags");
         final Map<String, String> tags = decodeAttributes(tree, "attributes");
         // TODO: support resource?
         final Map<String, String> resource = ImmutableMap.of();
         final String proc = decodeString(tree, "proc");
 
-        return new Metric(key, value, time, host, riemannTags, tags, resource, proc);
+        host.ifPresent(h -> tags.put(HOST, h));
+
+        return new Metric(key, value, time, riemannTags, tags, resource, proc);
     }
 
     private Object decodeEvent(JsonNode tree, List<Object> out) {
@@ -121,7 +130,7 @@ public class JsonObjectMapperDecoder extends MessageToMessageDecoder<ByteBuf> {
         final long ttl = decodeTtl(tree, "ttl");
         final String state = decodeString(tree, "state");
         final String description = decodeString(tree, "description");
-        final String host = decodeString(tree, "host");
+        final String host = decodeString(tree, HOST);
         final Set<String> riemannTags = decodeTags(tree, "tags");
         final Map<String, String> tags = decodeAttributes(tree, "attributes");
 
@@ -159,10 +168,10 @@ public class JsonObjectMapperDecoder extends MessageToMessageDecoder<ByteBuf> {
         return n.asDouble();
     }
 
-    private String decodeString(JsonNode tree, String name) {
+    String decodeString(JsonNode tree, String name) {
         final JsonNode n = tree.get(name);
 
-        if (n == null) {
+        if (n == null || n.isNull()) {
             return null;
         }
 

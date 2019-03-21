@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward Core
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -40,15 +45,19 @@ public class AgentConfig {
     public static final int DEFAULT_WORKER_THREADS = 4;
 
     public static final Map<String, String> DEFAULT_TAGS = Maps.newHashMap();
+    public static final Map<String, String> DEFAULT_TAGS_TO_RESOURCE = Maps.newHashMap();
     public static final Set<String> DEFAULT_RIEMANNTAGS = Sets.newHashSet();
+    public static final boolean DEFAULT_AUTO_HOST_TAG = true;
 
     public static final String DEFAULT_QLOG = "./qlog/";
 
     private final Optional<Debug> debug;
     private final String host;
     private final Map<String, String> tags;
+    private final Map<String, String> tagsToResource;
     private final Set<String> riemannTags;
     private final Set<String> skipTagsForKeys;
+    private final Boolean automaticHostTag;
     private final InputManagerModule input;
     private final OutputManagerModule output;
     private final SearchDomainDiscovery searchDomain;
@@ -63,8 +72,10 @@ public class AgentConfig {
     public AgentConfig(
         @JsonProperty("debug") Debug debug, @JsonProperty("host") String host,
         @JsonProperty("tags") Map<String, String> tags,
+        @JsonProperty("tagsToResource") Map<String, String> tagsToResource,
         @JsonProperty("riemannTags") Set<String> riemannTags,
         @JsonProperty("skipTagsForKeys") Set<String> skipTagsForKeys,
+        @JsonProperty("automaticHostTag") Boolean automaticHostTag,
         @JsonProperty("input") InputManagerModule input,
         @JsonProperty("output") OutputManagerModule output,
         @JsonProperty("searchDomain") SearchDomainDiscovery searchDomain,
@@ -77,8 +88,10 @@ public class AgentConfig {
         this.debug = Optional.ofNullable(debug);
         this.host = Optional.ofNullable(host).orElseGet(this::buildDefaultHost);
         this.tags = Optional.ofNullable(tags).orElse(DEFAULT_TAGS);
+        this.tagsToResource = Optional.ofNullable(tagsToResource).orElse(DEFAULT_TAGS_TO_RESOURCE);
         this.riemannTags = Optional.ofNullable(riemannTags).orElse(DEFAULT_RIEMANNTAGS);
         this.skipTagsForKeys = Optional.ofNullable(skipTagsForKeys).orElse(Sets.newHashSet());
+        this.automaticHostTag = Optional.ofNullable(automaticHostTag).orElse(DEFAULT_AUTO_HOST_TAG);
         this.input = Optional.ofNullable(input).orElseGet(InputManagerModule.supplyDefault());
         this.output = Optional.ofNullable(output).orElseGet(OutputManagerModule.supplyDefault());
         this.searchDomain =

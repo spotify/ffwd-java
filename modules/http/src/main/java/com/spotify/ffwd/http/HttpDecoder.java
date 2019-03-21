@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward HTTP Module
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd.http;
 
 import static io.netty.handler.codec.http.HttpMethod.GET;
@@ -60,10 +65,10 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
                         postBatch(ctx, in, out);
                         return;
                     }
-
+                    log.error("Unsupported Media Type");
                     throw new HttpException(HttpResponseStatus.UNSUPPORTED_MEDIA_TYPE);
                 }
-
+                log.error("HTTP Method Not Allowed");
                 throw new HttpException(HttpResponseStatus.METHOD_NOT_ALLOWED);
             default:
                 /* do nothing */
@@ -85,6 +90,7 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
         try (final InputStream inputStream = new ByteBufInputStream(in.content())) {
             batch = mapper.readValue(inputStream, Batch.class);
         } catch (final IOException e) {
+            log.error("HTTP Bad Request", e);
             throw new HttpException(HttpResponseStatus.BAD_REQUEST);
         }
 

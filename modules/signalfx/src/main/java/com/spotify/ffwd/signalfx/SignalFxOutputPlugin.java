@@ -1,18 +1,23 @@
-/*
- * Copyright 2013-2017 Spotify AB. All rights reserved.
- *
- * The contents of this file are licensed under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License. You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+/*-
+ * -\-\-
+ * FastForward SignalFx Module
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
  */
+
 package com.spotify.ffwd.signalfx;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -21,6 +26,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
+import com.google.inject.Scopes;
 import com.google.inject.name.Names;
 import com.signalfx.endpoint.SignalFxEndpoint;
 import com.signalfx.metrics.auth.AuthToken;
@@ -31,7 +37,7 @@ import com.signalfx.metrics.connection.HttpEventProtobufReceiverFactory;
 import com.signalfx.metrics.errorhandler.OnSendErrorHandler;
 import com.signalfx.metrics.flush.AggregateMetricSender;
 import com.spotify.ffwd.filter.Filter;
-import com.spotify.ffwd.output.BatchedPluginSink;
+import com.spotify.ffwd.module.Batching;
 import com.spotify.ffwd.output.OutputPlugin;
 import com.spotify.ffwd.output.OutputPluginModule;
 import com.spotify.ffwd.output.PluginSink;
@@ -54,14 +60,13 @@ public class SignalFxOutputPlugin extends OutputPlugin {
 
     @JsonCreator
     public SignalFxOutputPlugin(
-        @JsonProperty("sourceName") String sourceName,
-        @JsonProperty("authToken") String authToken,
+        @JsonProperty("sourceName") String sourceName, @JsonProperty("authToken") String authToken,
         @JsonProperty("flushInterval") Optional<Long> flushInterval,
+        @JsonProperty("batching") Optional<Batching> batching,
         @JsonProperty("soTimeout") Integer soTimeout,
         @JsonProperty("filter") Optional<Filter> filter
     ) {
-        super(filter,
-            flushInterval.isPresent() ? flushInterval : Optional.of(DEFAULT_FLUSH_INTERVAL));
+        super(filter, Batching.from(flushInterval, batching, Optional.of(DEFAULT_FLUSH_INTERVAL)));
         this.sourceName = Optional.ofNullable(sourceName).orElse(DEFAULT_SOURCE_NAME);
         this.authToken = Optional
             .ofNullable(authToken)
@@ -103,9 +108,9 @@ public class SignalFxOutputPlugin extends OutputPlugin {
 
             @Override
             protected void configure() {
-                bind(BatchedPluginSink.class).to(SignalFxPluginSink.class);
-                Key<PluginSink> sinkKey = Key.get(PluginSink.class, Names.named("signalfxSink"));
-                bind(sinkKey).to(SignalFxPluginSink.class);
+                final Key<SignalFxPluginSink> sinkKey =
+                    Key.get(SignalFxPluginSink.class, Names.named("signalfxSink"));
+                bind(sinkKey).to(SignalFxPluginSink.class).in(Scopes.SINGLETON);
                 install(wrapPluginSink(sinkKey, key));
                 expose(key);
             }

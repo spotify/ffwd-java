@@ -10,6 +10,6 @@ Standards-Version: 3.9.1
 
 Package: ffwd
 Architecture: all
-Depends: oracle-jvm-11
+Depends: oracle-jvm-11 (>=11.0.2-1spotify1) | openjdk-11-jre-headless
 Description: FastForward Java Agent
  FastForward is an events and metrics forwarding agent.

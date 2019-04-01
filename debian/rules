@@ -20,11 +20,11 @@ MVN+=-D user.home=$(MAVEN_HOME)
 
 BUILD=build
 
+FFWD_JAR=$(BUILD)/ffwd-full.jar
+FFWD=$(BUILD)/ffwd
+
 VERSION:=$(shell $(MVN) -q -Dexec.executable=echo -Dexec.args='$${project.version}' --non-recursive exec:exec)
 DEB_VERSION:=$(shell dpkg-parsechangelog | egrep '^Version:' | cut -f 2 -d ' ')
-
-FFWD_JAR=$(BUILD)/ffwd-full.jar
-FFWD=$(BUILD)/ffwd-$(VERSION)
 
 %:
 	dh $@

@@ -1,3 +1,7 @@
+---
+title: Pubsub
+---
+
 # FastForward Pubsub
 
 This modules provides a [Google Pubsub](https://cloud.google.com/pubsub/docs/overview) output plugin.

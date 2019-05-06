@@ -12,12 +12,7 @@ ffwd decorates the received metrics with system-wide tags or attributes. By doin
 
 This project is currently: __experimental__, use at your own risk.
 
-
-* [Protobuf Protocol](/modules/protobuf/)
-* [JSON Protocol](/modules/json/)
-* [HTTP Protocol](/modules/http/)
-* [Hacking](docs/hacking.md)
-* [On-disk Persistent Queue (WIP)](docs/on-disk-queue.md)
+__Head over to https://spotify.github.io/ffwd/ for documentation.__
 
 # Building
 

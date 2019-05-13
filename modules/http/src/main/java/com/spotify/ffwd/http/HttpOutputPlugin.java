@@ -48,14 +48,16 @@ public class HttpOutputPlugin extends OutputPlugin {
 
     @JsonCreator
     public HttpOutputPlugin(
-        @JsonProperty("id") String id, @JsonProperty("flushInterval") Optional<Long> flushInterval,
+        @JsonProperty("id") String id,
+        @JsonProperty("flushInterval") Optional<Long> flushInterval,
         @JsonProperty("batching") Optional<Batching> batching,
         @JsonProperty("discovery") HttpDiscovery discovery,
         @JsonProperty("filter") Optional<Filter> filter
 
     ) {
         super(filter, Batching.from(flushInterval, batching, Optional.of(DEFAULT_FLUSH_INTERVAL)));
-        this.discovery = Optional.ofNullable(discovery).orElseGet(HttpDiscovery.Companion::supplyDefault);
+        this.discovery = Optional.ofNullable(discovery).orElseGet(
+          HttpDiscovery.Companion::supplyDefault);
     }
 
     @Override

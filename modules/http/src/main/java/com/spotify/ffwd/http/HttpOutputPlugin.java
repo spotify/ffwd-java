@@ -40,9 +40,7 @@ import com.spotify.ffwd.output.PluginSink;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class HttpOutputPlugin extends OutputPlugin {
     public static final Long DEFAULT_FLUSH_INTERVAL = 500L;
 
@@ -57,7 +55,7 @@ public class HttpOutputPlugin extends OutputPlugin {
 
     ) {
         super(filter, Batching.from(flushInterval, batching, Optional.of(DEFAULT_FLUSH_INTERVAL)));
-        this.discovery = Optional.ofNullable(discovery).orElseGet(HttpDiscovery::supplyDefault);
+        this.discovery = Optional.ofNullable(discovery).orElseGet(HttpDiscovery.Companion::supplyDefault);
     }
 
     @Override

@@ -113,6 +113,7 @@ interface SearchDomainDiscovery {
         /**
          * Default implementation for http discovery when nothing else is configured.
          */
+        @JvmStatic
         fun supplyDefault(): SearchDomainDiscovery {
             return SearchDomainDiscovery.Empty()
         }

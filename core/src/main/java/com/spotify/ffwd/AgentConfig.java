@@ -97,7 +97,7 @@ public class AgentConfig {
         this.input = Optional.ofNullable(input).orElseGet(InputManagerModule.supplyDefault());
         this.output = Optional.ofNullable(output).orElseGet(OutputManagerModule.supplyDefault());
         this.searchDomain = Optional.ofNullable(searchDomain).orElseGet(
-          SearchDomainDiscovery.Companion::supplyDefault);
+          SearchDomainDiscovery::supplyDefault);
         this.asyncThreads = Optional.ofNullable(asyncThreads).orElse(DEFAULT_ASYNC_THREADS);
         this.schedulerThreads =
             Optional.ofNullable(schedulerThreads).orElse(DEFAULT_SCHEDULER_THREADS);

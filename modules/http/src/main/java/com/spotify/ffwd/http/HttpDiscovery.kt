@@ -29,7 +29,6 @@ import com.google.common.collect.ImmutableList
 import com.netflix.loadbalancer.LoadBalancerBuilder
 import com.netflix.loadbalancer.Server
 import java.util.*
-import java.util.stream.Collectors
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "type")
 @JsonSubTypes(Type(HttpDiscovery.Static::class), Type(HttpDiscovery.Srv::class))
@@ -47,10 +46,9 @@ interface HttpDiscovery {
                 builder: LoadBalancerBuilder<Server>, searchDomain: Optional<String>
         ): LoadBalancerBuilder<Server> {
             val servers = this.servers
-                    .stream()
                     .map { hostAndPort -> hostAndPort.withOptionalSearchDomain(searchDomain) }
                     .map { hostAndPort -> Server(hostAndPort.host, hostAndPort.port) }
-                    .collect(Collectors.toList())
+                    .toList()
             return builder.withDynamicServerList(StaticServerList(servers))
         }
     }
@@ -94,6 +92,7 @@ interface HttpDiscovery {
         /**
          * Default implementation for http discovery when nothing else is configured.
          */
+        @JvmStatic
         fun supplyDefault(): HttpDiscovery {
             return HttpDiscovery.Static(ImmutableList.of(DEFAULT_SERVER))
         }

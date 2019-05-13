@@ -56,8 +56,7 @@ public class HttpOutputPlugin extends OutputPlugin {
 
     ) {
         super(filter, Batching.from(flushInterval, batching, Optional.of(DEFAULT_FLUSH_INTERVAL)));
-        this.discovery = Optional.ofNullable(discovery).orElseGet(
-          HttpDiscovery.Companion::supplyDefault);
+        this.discovery = Optional.ofNullable(discovery).orElseGet(HttpDiscovery::supplyDefault);
     }
 
     @Override

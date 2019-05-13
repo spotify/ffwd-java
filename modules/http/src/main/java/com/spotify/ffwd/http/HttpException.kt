@@ -22,4 +22,4 @@ package com.spotify.ffwd.http
 
 import io.netty.handler.codec.http.HttpResponseStatus
 
-class HttpException(val status: HttpResponseStatus?) : RuntimeException(status?.reasonPhrase())
+class HttpException(val status: HttpResponseStatus?) : RuntimeException(status!!.reasonPhrase())

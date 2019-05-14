@@ -50,6 +50,7 @@ data class SrvServerList(val record: String) : ServerList<Server> {
                     "DNS lookup failed: " + lookup.errorString + ": " + record)
         }
 
+
         val results = ImmutableList.builder<Server>()
 
         if (result != null) {

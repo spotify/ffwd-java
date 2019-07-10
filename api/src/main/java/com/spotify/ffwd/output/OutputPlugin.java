@@ -81,7 +81,7 @@ public abstract class OutputPlugin {
             protected void configure() {
                 Key<PluginSink> sinkKey = (Key<PluginSink>) input;
 
-                if (batching.getFlushInterval().isPresent() &&
+                if (batching.getFlushInterval() != null &&
                     BatchablePluginSink.class.isAssignableFrom(
                         input.getTypeLiteral().getRawType())) {
                     final Key<PluginSink> flushingKey =
@@ -95,7 +95,7 @@ public abstract class OutputPlugin {
                         .annotatedWith(BatchingDelegate.class)
                         .to(batchedPluginSink);
                     bind(flushingKey).toInstance(
-                        new BatchingPluginSink(batching.getFlushInterval().get(),
+                        new BatchingPluginSink(batching.getFlushInterval(),
                             batching.getBatchSizeLimit(), batching.getMaxPendingFlushes()));
 
                     sinkKey = flushingKey;

@@ -41,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import lombok.Getter;
+import javax.annotation.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,8 +51,11 @@ public class CoreOutputManager implements OutputManager {
     private static final Logger log = LoggerFactory.getLogger(CoreOutputManager.class);
 
     @Inject
-    @Getter
     private List<PluginSink> sinks;
+
+    public List<PluginSink> getSinks() {
+        return this.sinks;
+    }
 
     @Inject
     private AsyncFramework async;
@@ -105,6 +108,15 @@ public class CoreOutputManager implements OutputManager {
 
     @Inject
     private Filter filter;
+
+    @Inject
+    @Named("rateLimit")
+    @Nullable
+    private Integer rateLimit;
+
+    public Integer getRateLimit() {
+        return rateLimit;
+    }
 
     @Override
     public void init() {

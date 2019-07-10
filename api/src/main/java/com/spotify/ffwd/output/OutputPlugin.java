@@ -21,7 +21,6 @@
 package com.spotify.ffwd.output;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 import com.fasterxml.jackson.annotation.JsonTypeInfo.Id;
 import com.google.inject.Key;
 import com.google.inject.Module;
@@ -38,7 +37,7 @@ import com.spotify.ffwd.statistics.NoopCoreStatistics;
 import java.util.Optional;
 import java.util.logging.Logger;
 
-@JsonTypeInfo(use = Id.NAME, include = As.PROPERTY, property = "type")
+@JsonTypeInfo(use = Id.NAME, property = "type")
 public abstract class OutputPlugin {
 
     protected final Batching batching;
@@ -79,6 +78,7 @@ public abstract class OutputPlugin {
         return new PrivateModule() {
             @Override
             protected void configure() {
+                @SuppressWarnings("unchecked")
                 Key<PluginSink> sinkKey = (Key<PluginSink>) input;
 
                 if (batching.getFlushInterval() != null &&
@@ -87,6 +87,7 @@ public abstract class OutputPlugin {
                     final Key<PluginSink> flushingKey =
                         Key.get(PluginSink.class, Names.named("flushing"));
                     // IDEA doesn't like this cast, but it's correct, tho admittedly not pretty
+                    @SuppressWarnings({"RedundantCast", "unchecked"})
                     final Key<? extends BatchablePluginSink> batchedPluginSink =
                         (Key<? extends BatchablePluginSink>) (Key<? extends PluginSink>) sinkKey;
 

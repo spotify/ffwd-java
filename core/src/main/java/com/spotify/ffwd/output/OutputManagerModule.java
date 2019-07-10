@@ -155,6 +155,7 @@ public class OutputManagerModule {
             @Provides
             @Singleton
             @Named("rateLimit")
+            @Nullable
             public Integer rateLimit() {
                 return rateLimit;
             }

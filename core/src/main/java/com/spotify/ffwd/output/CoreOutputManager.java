@@ -20,9 +20,9 @@
 
 package com.spotify.ffwd.output;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.google.common.util.concurrent.RateLimiter;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import com.spotify.ffwd.debug.DebugServer;
@@ -34,7 +34,6 @@ import com.spotify.ffwd.statistics.OutputManagerStatistics;
 import eu.toolchain.async.AsyncFramework;
 import eu.toolchain.async.AsyncFuture;
 import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +48,8 @@ public class CoreOutputManager implements OutputManager {
     private static final String DEBUG_ID = "core.output";
     private static final String HOST = "host";
     private static final Logger log = LoggerFactory.getLogger(CoreOutputManager.class);
+
+    private final RateLimiter rateLimiter;
 
     @Inject
     private List<PluginSink> sinks;
@@ -109,13 +110,20 @@ public class CoreOutputManager implements OutputManager {
     @Inject
     private Filter filter;
 
-    @Inject
-    @Named("rateLimit")
-    @Nullable
-    private Integer rateLimit;
+    public final Double getRateLimit() {
+        if (rateLimiter == null) {
+            return null;
+        }
+        return rateLimiter.getRate();
+    }
 
-    public Integer getRateLimit() {
-        return rateLimit;
+    @Inject
+    CoreOutputManager(@Named("rateLimit") @Nullable Integer rateLimit) {
+        if (rateLimit != null && rateLimit > 0) {
+            rateLimiter = RateLimiter.create(rateLimit);
+        } else {
+            rateLimiter = null;
+        }
     }
 
     @Override
@@ -134,17 +142,20 @@ public class CoreOutputManager implements OutputManager {
             return;
         }
 
-        statistics.reportSentEvents(1);
-
         final Event filtered = filter(event);
 
         debug.inspectEvent(DEBUG_ID, filtered);
 
-        for (final PluginSink s : sinks) {
-            if (s.isReady()) {
-                s.sendEvent(filtered);
-            }
+        if (!rateLimitAllowed(1)) {
+            statistics.reportEventsDroppedByRateLimit(1);
+            return;
         }
+
+        sinks.stream()
+          .filter(PluginSink::isReady)
+          .forEach(s -> s.sendEvent(filtered));
+
+        statistics.reportSentEvents(1);
     }
 
     @Override
@@ -154,54 +165,65 @@ public class CoreOutputManager implements OutputManager {
             return;
         }
 
-        statistics.reportSentMetrics(1);
-
         final Metric filtered = filter(metric);
 
         debug.inspectMetric(DEBUG_ID, filtered);
 
-        for (final PluginSink s : sinks) {
-            if (s.isReady()) {
-                s.sendMetric(filtered);
-            }
+        if (!rateLimitAllowed(1)) {
+            statistics.reportMetricsDroppedByRateLimit(1);
+            return;
         }
+
+        sinks.stream()
+          .filter(PluginSink::isReady)
+          .forEach(s -> s.sendMetric(filtered));
+
+        statistics.reportSentMetrics(1);
     }
 
     @Override
     public void sendBatch(Batch batch) {
-        statistics.reportSentMetrics(batch.getPoints().size());
-
         final Batch filtered = filter(batch);
 
         debug.inspectBatch(DEBUG_ID, filtered);
 
-        for (final PluginSink s : sinks) {
-            if (s.isReady()) {
-                s.sendBatch(filtered);
-            }
+        int batchSize = batch.getPoints().size();
+
+        if (batchSize > 0 && !rateLimitAllowed(batchSize)) {
+            statistics.reportMetricsDroppedByRateLimit(batchSize);
+            return;
         }
+
+        sinks.stream()
+          .filter(PluginSink::isReady)
+          .forEach(s -> s.sendBatch(filtered));
+
+        statistics.reportSentMetrics(batchSize);
     }
 
     @Override
     public AsyncFuture<Void> start() {
-        final ArrayList<AsyncFuture<Void>> futures = Lists.newArrayList();
-
-        for (final PluginSink s : sinks) {
-            futures.add(s.start());
-        }
+        List<AsyncFuture<Void>> futures = sinks.stream()
+          .map(PluginSink::start)
+          .collect(Collectors.toList());
 
         return async.collectAndDiscard(futures);
     }
 
     @Override
     public AsyncFuture<Void> stop() {
-        final ArrayList<AsyncFuture<Void>> futures = Lists.newArrayList();
-
-        for (final PluginSink s : sinks) {
-            futures.add(s.stop());
-        }
+        List<AsyncFuture<Void>> futures = sinks.stream()
+          .map(PluginSink::stop)
+          .collect(Collectors.toList());
 
         return async.collectAndDiscard(futures);
+    }
+
+    private boolean rateLimitAllowed(int permits) {
+        if (rateLimiter == null) {
+            return true;
+        }
+        return rateLimiter.tryAcquire(permits);
     }
 
     /**

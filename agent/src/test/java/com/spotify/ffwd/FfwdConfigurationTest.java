@@ -98,7 +98,7 @@ public class FfwdConfigurationTest {
         CoreOutputManager outputManager = getOutputManager(null);
 
         assertEquals(100, outputManager.getTtl());
-        assertEquals(Integer.valueOf(1000), outputManager.getRateLimit());
+        assertEquals(Double.valueOf(1000), outputManager.getRateLimit());
     }
 
     @Test

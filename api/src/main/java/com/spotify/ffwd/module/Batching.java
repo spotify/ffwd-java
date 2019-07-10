@@ -65,7 +65,6 @@ public class Batching {
      * This only contains something when the user didn't use any 'batching' sub structure in the
      * configuration, and just specified flushInterval.
      * @param batching A complete Batching structure, on the output plugin level in the conf.
-     * batching was specified.
      * @return A Batching object.
      */
     public static Batching from(

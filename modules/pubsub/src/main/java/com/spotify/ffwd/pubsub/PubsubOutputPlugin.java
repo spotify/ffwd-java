@@ -64,8 +64,7 @@ public class PubsubOutputPlugin extends OutputPlugin {
   private static final long DEFAULT_COUNT_THRESHOLD = 1000L;
   private static final long DEFAULT_DELAY_THRESHOLD = Duration.ofMillis(200).toMillis();
 
-  private static final boolean DEFAULT_CACHE_ENABLED = false;
-  private static final long DEFAULT_CACHE_MINUTES = 30L;
+  private static final long DEFAULT_CACHE_MINUTES = 0L;
   private static final long DEFAULT_CACHE_MAX_SIZE = 50_000L; // roughly 7.2 MB of memory
 
   private final Optional<Serializer> serializer;
@@ -74,7 +73,6 @@ public class PubsubOutputPlugin extends OutputPlugin {
   private final Optional<String> project;
   private final Optional<String> topic;
 
-  private final boolean writeCacheEnabled;
   private final long writeCacheDurationMinutes;
   private final long writeCacheMaxSize;
 
@@ -93,7 +91,6 @@ public class PubsubOutputPlugin extends OutputPlugin {
     @JsonProperty("project") String project,
     @JsonProperty("topic") String topic,
 
-    @JsonProperty("writeCacheEnabled") Boolean writeCacheEnabled,
     @JsonProperty("writeCacheDurationMinutes") Long writeCacheDurationMinutes,
     @JsonProperty("writeCacheMaxSize") Long writeCacheMaxSize,
 
@@ -108,7 +105,6 @@ public class PubsubOutputPlugin extends OutputPlugin {
     this.project = ofNullable(project);
     this.topic = ofNullable(topic);
 
-    this.writeCacheEnabled = ofNullable(writeCacheEnabled).orElse(DEFAULT_CACHE_ENABLED);
     this.writeCacheDurationMinutes =
         ofNullable(writeCacheDurationMinutes).orElse(DEFAULT_CACHE_MINUTES);
     this.writeCacheMaxSize = ofNullable(writeCacheMaxSize).orElse(DEFAULT_CACHE_MAX_SIZE);
@@ -167,7 +163,7 @@ public class PubsubOutputPlugin extends OutputPlugin {
       @Provides
       @Singleton
       public Optional<Cache<String, Boolean>> cache() {
-        if (writeCacheEnabled) {
+        if (writeCacheDurationMinutes > 0) {
           return Optional.of(CacheBuilder.newBuilder()
               .expireAfterAccess(java.time.Duration.ofMinutes(writeCacheDurationMinutes))
               .maximumSize(writeCacheMaxSize)

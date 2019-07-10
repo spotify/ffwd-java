@@ -27,6 +27,7 @@ import com.google.common.hash.Hashing;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -42,8 +43,8 @@ public class Metric {
     private final double value;
     private final Date time;
     private final Set<String> riemannTags;
-    private final Map<String, String> tags;
-    private final Map<String, String> resource;
+    private final TreeMap<String, String> tags;
+    private final TreeMap<String, String> resource;
     private final String proc;
 
     /**

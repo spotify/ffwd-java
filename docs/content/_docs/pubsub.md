@@ -42,12 +42,11 @@ output:
 ### Write Cache
 
 There is an optional write cache that can be enabled. At Spotify this is being used as a "cheap" method
-to deduplicate the metadata around timeseries when using the heroic tsbd. The way this feature is used is by publishing from ffwd twice. 
-Once for "metrics" that get written to bigtable every batch interval and another for metadata and suggestion writes to elasticsearch. Only the metadata publisher would
-enabled the write cache. This would only publish metadata every cacheDuration.
+to deduplicate the metadata around timeseries when using the Heroic TSDB. The way this feature is used is by publishing from ffwd twice. 
+Once for "metrics" that get written to bigtable every batch interval and another for metadata and suggestion 
+writes to elasticsearch. Only the metadata publisher would enabled the write cache. This would only publish metadata every cacheDuration.
 
-* `writeCacheEnabled` - defaults false
-* `writeCacheDurationMinutes` - defaults to 30 minutes
+* `writeCacheDurationMinutes` - defaults to 0 minutes - which disables the write cache
 * `writeCacheMaxSize` - defaults to 10,000
 
 

@@ -43,8 +43,8 @@ public class Metric {
     private final double value;
     private final Date time;
     private final Set<String> riemannTags;
-    private final TreeMap<String, String> tags;
-    private final TreeMap<String, String> resource;
+    private final Map<String, String> tags;
+    private final Map<String, String> resource;
     private final String proc;
 
     /**
@@ -62,8 +62,9 @@ public class Metric {
         if (key != null) {
             hasher.putString(key, Charsets.UTF_8);
         }
+        TreeMap<String, String> sortedTags = new TreeMap<>(tags);
 
-        for (final Map.Entry<String, String> kv : tags.entrySet()) {
+        for (final Map.Entry<String, String> kv : sortedTags.entrySet()) {
             final String k = kv.getKey();
             final String v = kv.getValue();
 

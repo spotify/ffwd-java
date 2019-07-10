@@ -79,7 +79,7 @@ public class NoopCoreStatistics implements CoreStatistics {
         return noopOutputManagerStatistics;
     }
 
-    private static final OutputPluginStatistics noopOutputPluginStatistics = dropped -> {};
+    private static final OutputPluginStatistics noopOutputPluginStatistics = dropped -> { };
 
     @Override
     public OutputPluginStatistics newOutputPlugin(String id) {

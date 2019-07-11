@@ -409,7 +409,8 @@ public class BatchingPluginSink implements PluginSink {
         private final List<Metric> metrics = new ArrayList<>();
         private final List<com.spotify.ffwd.model.Batch> batches = new ArrayList<>();
 
-        public Batch() {}
+        public Batch() {
+        }
 
         private int getBatchesSize() {
             return batches.stream().mapToInt(batch -> batch.getPoints().size()).sum();

@@ -183,7 +183,9 @@ public class NettyDebugServer implements DebugServer {
             ImmutableList.<AsyncFuture<Void>>of(serverClose, channelGroupClose));
     }
 
-    public String toString() {return "NettyDebugServer(localAddress=" + this.localAddress + ")";}
+    public String toString() {
+        return "NettyDebugServer(localAddress=" + this.localAddress + ")";
+    }
 
     @Data
     public static class WriteMetricEvent {

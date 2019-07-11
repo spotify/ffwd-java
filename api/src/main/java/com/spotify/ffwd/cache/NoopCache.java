@@ -28,7 +28,7 @@ import com.spotify.ffwd.model.Metric;
 public class NoopCache implements WriteCache {
 
   @Override
-  public boolean isCached(final Metric metric) {
+  public boolean checkCacheOrSet(final Metric metric) {
     return false;
   }
 

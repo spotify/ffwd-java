@@ -50,7 +50,7 @@ public class Spotify100ProtoSerializer implements Serializer {
     final Spotify100.Batch.Builder batch = Spotify100.Batch.newBuilder();
 
     for (Metric metric : metrics) {
-      if (!writeCache.isCached(metric)) {
+      if (!writeCache.checkCacheOrSet(metric)) {
         batch.addMetric(serializeMetric(metric));
       }
     }

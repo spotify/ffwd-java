@@ -36,7 +36,7 @@ public class ExpiringCacheTest {
     final Cache<String, Boolean> cache =
       CacheBuilder.newBuilder().expireAfterWrite(Duration.ofMinutes(1)).build();
     final WriteCache expiringCache = new ExpiringCache(cache);
-    assertFalse(expiringCache.isCached(Utils.makeMetric()));
-    assertTrue(expiringCache.isCached(Utils.makeMetric()));
+    assertFalse(expiringCache.checkCacheOrSet(Utils.makeMetric()));
+    assertTrue(expiringCache.checkCacheOrSet(Utils.makeMetric()));
   }
 }

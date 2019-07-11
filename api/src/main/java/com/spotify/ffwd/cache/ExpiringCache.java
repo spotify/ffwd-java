@@ -41,7 +41,7 @@ public class ExpiringCache implements WriteCache {
   }
 
   @Override
-  public boolean isCached(final Metric metric) {
+  public boolean checkCacheOrSet(final Metric metric) {
     if (writeCache.getIfPresent(metric.generateHash()) != null) {
       log.trace("Metric in cache: {}", metric);
       return true;

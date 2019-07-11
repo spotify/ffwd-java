@@ -24,7 +24,7 @@ import com.spotify.ffwd.model.Metric;
 
 public interface WriteCache {
 
-  // Check to see if a metric is cached locally. If not present set it,
-  boolean isCached(final Metric metric);
+  // Check to see if a metric is cached locally. If not present, set it.
+  boolean checkCacheOrSet(final Metric metric);
 
 }

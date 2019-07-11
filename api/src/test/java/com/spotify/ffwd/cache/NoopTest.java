@@ -29,7 +29,7 @@ public class NoopTest {
 
   @Test
   public void testIsCached() {
-    assertFalse(new NoopCache().isCached(Utils.makeMetric()));
+    assertFalse(new NoopCache().checkCacheOrSet(Utils.makeMetric()));
   }
 
 }

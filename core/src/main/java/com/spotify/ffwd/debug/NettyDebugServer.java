@@ -123,7 +123,7 @@ public class NettyDebugServer implements DebugServer {
                 connected.add(ch);
                 log.info("Connected {}", ch);
 
-                ch.closeFuture().addListener((ChannelFutureListener) future1 -> {
+                ch.closeFuture().addListener((ChannelFutureListener) f -> {
                     connected.remove(ch);
                     log.info("Disconnected {}", ch);
                 });

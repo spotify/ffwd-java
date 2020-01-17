@@ -1,0 +1,173 @@
+/*-
+ * -\-\-
+ * FastForward OpenCensus Module
+ * --
+ * Copyright (C) 2016 - 2018 Spotify AB
+ * --
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ * -/-/-
+ */
+
+
+package com.spotify.ffwd.opencensus;
+
+import com.google.inject.Inject;
+import com.spotify.ffwd.model.Batch;
+import com.spotify.ffwd.model.Metric;
+import com.spotify.ffwd.output.FakeBatchablePluginSinkBase;
+import com.spotify.ffwd.output.PluginSink;
+import eu.toolchain.async.AsyncFramework;
+import eu.toolchain.async.AsyncFuture;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration.Builder;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
+import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
+import io.opencensus.resource.Resource;
+import io.opencensus.stats.Aggregation.Sum;
+import io.opencensus.stats.Aggregation;
+import io.opencensus.stats.Measure.MeasureLong;
+import io.opencensus.stats.Stats;
+import io.opencensus.stats.StatsRecorder;
+import io.opencensus.stats.View.Name;
+import io.opencensus.stats.View;
+import io.opencensus.stats.ViewManager;
+import io.opencensus.tags.TagContext;
+import io.opencensus.tags.TagContextBuilder;
+import io.opencensus.tags.TagKey;
+import io.opencensus.tags.TagValue;
+import io.opencensus.tags.Tagger;
+import io.opencensus.tags.Tags;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+/**
+ * PluginSink to export metrics into Stackdriver via OpenCensus API.
+ *
+ * Right now, this is specifically designed to export event counts for
+ * use in SLAs but could easily be extended to support more view types
+ * by allowing them to be specified in config.
+ *
+ * Resources can be specified using the environment variables
+ * OC_RESOURCE_TYPE and OC_RESOURCE_LABELS until the api becomes stable
+ * https://www.javadoc.io/doc/io.opencensus/opencensus-api/latest/io/opencensus/resource/package-summary.html
+ */
+public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements PluginSink  {
+  private static final Logger log = LoggerFactory.getLogger(OpenCensusPluginSink.class);
+  @Inject
+  private AsyncFramework async;
+
+  private Map<String, MeasureLong> measures;
+
+  private static final Tagger tagger = Tags.getTagger();
+  private static final StatsRecorder statsRecorder = Stats.getStatsRecorder();
+
+  private Optional<String> gcpProject;
+
+  public void init() {
+    measures = new HashMap();
+  }
+
+  public OpenCensusPluginSink(Optional<String> gcpProject) {
+    this.gcpProject = gcpProject;
+  }
+
+  public void sendMetric(Metric metric) {
+    try {
+      MeasureLong measure = measures.get(metric.getKey());
+      if (measure == null) {
+        // If we keep getting new metrics, this will keep growing forever. But as
+        // there doesn't seem to be a way to unregister a view, it's not obvious what
+        // the right thing to do is here.
+        measure = MeasureLong.create("Events", "Number of Events", "1");
+        measures.put(metric.getKey(), measure);
+
+        // If the first metric we see with a given name doesn't have all tags present
+        // they'll not be added to the view. This shouldn't be a problem but it's
+        // worth baring in mind. If Stackdriver is the destination, the
+        // metricDescription can be created there, making this less important.
+        final List<TagKey> columns = new ArrayList<TagKey>(metric.getTags().size());
+        metric.getTags().keySet().forEach(tagName -> {
+            columns.add(TagKey.create(tagName));
+        });
+        final View view =
+            View.create(
+                Name.create(metric.getKey()),
+                metric.getKey(),
+                measure,
+                Sum.create(),
+                columns);
+
+        Stats.getViewManager().registerView(view);
+      }
+      final TagContextBuilder builder = tagger.emptyBuilder();
+      metric.getTags().forEach((k, v) -> {
+          builder.put(TagKey.create(k), TagValue.create(v));
+      });
+      final TagContext context = builder.build();
+
+      statsRecorder.newMeasureMap().put(measure, (long)metric.getValue()).record(context);
+    }
+    catch (Exception ex) {
+      log.error("Couldn't send metric %s", ex);
+      throw ex;
+    }
+  }
+
+  public void sendBatch(Batch batch) {
+    // NB: Unfortunately batches and measureMaps are not the same.
+    batch.getPoints().forEach(point -> {
+      sendMetric(convertBatchMetric(batch, point));
+    });
+  }
+
+  public AsyncFuture<Void> start() {
+    // NB using Application Default Credentials here:
+    // See https://developers.google.com/identity/protocols/application-default-credentials
+    try {
+      StackdriverStatsConfiguration.Builder builder = StackdriverStatsConfiguration.builder();
+
+      // We clear out the constant labels because otherwise they are populated with
+      // values from this VM which is unlikely to be what we want.
+      builder.setConstantLabels(Collections.emptyMap());
+
+      // This can also be done by setting enviroment variables but it'll be frequently
+      // be used so let's make it easy.
+      if (gcpProject.isPresent()) {
+        builder.setProjectId(gcpProject.get());
+      }
+
+      StackdriverStatsExporter.createAndRegister(builder.build());
+    }
+    catch (IOException ex) {
+      log.error("Couldn't connect to Stackdriver");
+      return async.failed(ex);
+    }
+    return async.resolved();
+  }
+
+  public AsyncFuture<Void> stop() {
+    return async.resolved();
+  }
+
+  public boolean isReady() {
+    return true;
+  }
+
+}

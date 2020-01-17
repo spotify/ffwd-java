@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>ffwd-agent</artifactId>
-  <version>0.5.2-SNAPSHOT</version>
+  <version>0.5.6-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>FastForward Agent</name>
@@ -10,7 +10,7 @@
   <parent>
     <groupId>com.spotify.ffwd</groupId>
     <artifactId>ffwd-parent</artifactId>
-    <version>0.5.2-SNAPSHOT</version>
+    <version>0.5.6-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -136,7 +136,7 @@
       <plugin>
         <artifactId>jdeb</artifactId>
         <groupId>org.vafer</groupId>
-        <version>1.7</version>
+        <version>1.8</version>
         <configuration>
           <controlDir>${basedir}/src/deb/control</controlDir>
           <verbose>true</verbose>

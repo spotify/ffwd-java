@@ -28,18 +28,14 @@ import com.spotify.ffwd.output.FakeBatchablePluginSinkBase;
 import com.spotify.ffwd.output.PluginSink;
 import eu.toolchain.async.AsyncFramework;
 import eu.toolchain.async.AsyncFuture;
-import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration.Builder;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsExporter;
-import io.opencensus.resource.Resource;
 import io.opencensus.stats.Aggregation.Sum;
-import io.opencensus.stats.Aggregation;
 import io.opencensus.stats.Measure.MeasureLong;
 import io.opencensus.stats.Stats;
 import io.opencensus.stats.StatsRecorder;
 import io.opencensus.stats.View.Name;
 import io.opencensus.stats.View;
-import io.opencensus.stats.ViewManager;
 import io.opencensus.tags.TagContext;
 import io.opencensus.tags.TagContextBuilder;
 import io.opencensus.tags.TagKey;
@@ -48,7 +44,6 @@ import io.opencensus.tags.Tagger;
 import io.opencensus.tags.Tags;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +52,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/**
+/***
  * PluginSink to export metrics into Stackdriver via OpenCensus API.
  *
  * Right now, this is specifically designed to export event counts for
@@ -66,7 +61,8 @@ import org.slf4j.LoggerFactory;
  *
  * Resources can be specified using the environment variables
  * OC_RESOURCE_TYPE and OC_RESOURCE_LABELS until the api becomes stable
- * https://www.javadoc.io/doc/io.opencensus/opencensus-api/latest/io/opencensus/resource/package-summary.html
+ * https://www.javadoc.io/doc/io.opencensus/opencensus-api/latest/io/opencensus/resource/
+package-summary.html
  */
 public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements PluginSink  {
   private static final Logger log = LoggerFactory.getLogger(OpenCensusPluginSink.class);
@@ -123,9 +119,8 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
       });
       final TagContext context = builder.build();
 
-      statsRecorder.newMeasureMap().put(measure, (long)metric.getValue()).record(context);
-    }
-    catch (Exception ex) {
+      statsRecorder.newMeasureMap().put(measure, (long) metric.getValue()).record(context);
+    } catch (Exception ex) {
       log.error("Couldn't send metric %s", ex);
       throw ex;
     }
@@ -155,8 +150,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
       }
 
       StackdriverStatsExporter.createAndRegister(builder.build());
-    }
-    catch (IOException ex) {
+    } catch (IOException ex) {
       log.error("Couldn't connect to Stackdriver");
       return async.failed(ex);
     }

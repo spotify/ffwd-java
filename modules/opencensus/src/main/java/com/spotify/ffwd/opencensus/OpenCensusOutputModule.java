@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * FastForward MyPlugin Module
+ * FastForward OpenCensus Module
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --

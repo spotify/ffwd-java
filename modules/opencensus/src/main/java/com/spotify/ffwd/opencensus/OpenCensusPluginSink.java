@@ -50,10 +50,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +81,8 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
   private Optional<String> gcpProject;
 
   public void init() {
-    measures = new HashMap();
+    // Is this actually needed, not sure. Better safe than sorry!
+    measures = new ConcurrentHashMap();
   }
 
   public OpenCensusPluginSink(Optional<String> gcpProject) {
@@ -98,10 +99,10 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
         measure = MeasureLong.create("Events", "Number of Events", "1");
         measures.put(metric.getKey(), measure);
 
-        // If the first metric we see with a given name doesn't have all tags present
-        // they'll not be added to the view. This shouldn't be a problem but it's
-        // worth baring in mind. If Stackdriver is the destination, the
-        // metricDescription can be created there, making this less important.
+        // Stackdriver expects each metric to have the same set of tags so metrics
+        // missing tags will be rejected. NB by default stackdriver will create
+        // the metricDescription based on the first metric received so be consistant
+        // from the start.
         final List<TagKey> columns = new ArrayList<TagKey>(metric.getTags().size());
         metric.getTags().keySet().forEach(tagName -> {
             columns.add(TagKey.create(tagName));

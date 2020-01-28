@@ -353,6 +353,12 @@
         <version>0.0.3</version>
       </dependency>
 
+      <dependency>
+        <groupId>com.clearspring.analytics</groupId>
+        <artifactId>stream</artifactId>
+        <version>2.9.8</version>
+      </dependency>
+
 
       <dependency>
         <groupId>org.xerial.snappy</groupId>

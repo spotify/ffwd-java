@@ -56,16 +56,19 @@ public class OutputManagerModule {
     private final List<OutputPlugin> plugins;
     private final Filter filter;
     @Nullable private final Integer rateLimit;
+    @Nullable private final Long cardinalityLimit;
 
     @JsonCreator
     public OutputManagerModule(
         @JsonProperty("plugins") List<OutputPlugin> plugins,
         @JsonProperty("filter") Filter filter,
-        @JsonProperty("ratelimit") @Nullable Integer rateLimit
+        @JsonProperty("ratelimit") @Nullable Integer rateLimit,
+        @JsonProperty("cardinalitylimit") @Nullable Long cardinalityLimit
     ) {
         this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
         this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);
         this.rateLimit = rateLimit;
+        this.cardinalityLimit = cardinalityLimit;
     }
 
     public Module module() {
@@ -160,6 +163,14 @@ public class OutputManagerModule {
                 return rateLimit;
             }
 
+            @Provides
+            @Singleton
+            @Named("cardinalityLimit")
+            @Nullable
+            public Long cardinalityLimit() {
+                return cardinalityLimit;
+            }
+
             @Override
             protected void configure() {
                 bind(OutputManager.class).to(CoreOutputManager.class).in(Scopes.SINGLETON);
@@ -235,6 +246,6 @@ public class OutputManagerModule {
     }
 
     public static Supplier<OutputManagerModule> supplyDefault() {
-        return () -> new OutputManagerModule(null, null, null);
+        return () -> new OutputManagerModule(null, null, null, null);
     }
 }

@@ -20,6 +20,7 @@
 
 package com.spotify.ffwd.output;
 
+import com.clearspring.analytics.stream.cardinality.HyperLogLogPlus;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -53,6 +54,7 @@ public class CoreOutputManager implements OutputManager {
     private static final String[] KEYS_NEVER_TO_DROP = {"ffwd-java", "ffwd-java.ffwd-java"};
 
     private final TokenBucket rateLimiter;
+    private final Long cardinalityLimit;
 
     @Inject
     private List<PluginSink> sinks;
@@ -113,6 +115,8 @@ public class CoreOutputManager implements OutputManager {
     @Inject
     private Filter filter;
 
+    private HyperLogLogPlus hyperLog;
+
     public final Long getRateLimit() {
         if (rateLimiter == null) {
             return null;
@@ -120,11 +124,21 @@ public class CoreOutputManager implements OutputManager {
         return rateLimiter.getCapacity();
     }
 
+    public final Long getCardinalityLimit() {
+        if (cardinalityLimit == null) {
+            return null;
+        }
+        return cardinalityLimit;
+    }
+
     @Inject
-    CoreOutputManager(@Named("rateLimit") @Nullable Integer rateLimit) {
+    CoreOutputManager(@Named("rateLimit") @Nullable Integer rateLimit,
+        @Named("cardinalityLimit") @Nullable Long cardinalityLimit) {
+
         if (rateLimit != null && rateLimit > 0) {
             // Create a rate limiter with a configurable QPS, and
             // tick every half second to reduce the delay between refills.
+            log.info("Initializing rate limiting: {} per second", rateLimit);
             rateLimiter = TokenBuckets.builder()
               .withCapacity(rateLimit)
               .withInitialTokens(rateLimit)
@@ -133,6 +147,16 @@ public class CoreOutputManager implements OutputManager {
         } else {
             rateLimiter = null;
         }
+
+        if (cardinalityLimit != null && cardinalityLimit > 0) {
+            // Use cardinalityLimit to limit cardinality
+            log.info("Initializing cardinality limiting: {}", cardinalityLimit);
+            this.cardinalityLimit = cardinalityLimit;
+        } else {
+            this.cardinalityLimit = null;
+        }
+
+        hyperLog = new HyperLogLogPlus(14, 25);
     }
 
     @Override
@@ -155,10 +179,23 @@ public class CoreOutputManager implements OutputManager {
 
         debug.inspectMetric(DEBUG_ID, filtered);
 
-        if (!rateLimitAllowed(1, metric.getKey())) {
-            log.debug("Dropping a metric due to rate limiting");
-            statistics.reportMetricsDroppedByRateLimit(1);
-            return;
+        hyperLog.offer(metric.hashCode());
+        statistics.reportMetricsCardinality(metric.hashCode());
+
+        if (!Arrays.asList(KEYS_NEVER_TO_DROP).contains(metric.getKey())) {
+            if (!rateLimitAllowed(1)) {
+                log.debug("Dropping a metric due to rate limiting");
+                statistics.reportMetricsDroppedByRateLimit(1);
+                return;
+            }
+
+            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
+              log.debug(
+                  "Dropping a metric due to cardinality limiting; cardinality {}",
+                  hyperLog.cardinality());
+              statistics.reportMetricsDroppedByCardinalityLimit(1);
+              return;
+            }
         }
 
         sinks.stream()
@@ -176,10 +213,24 @@ public class CoreOutputManager implements OutputManager {
 
         int batchSize = batch.getPoints().size();
 
-        if (batchSize > 0 && !rateLimitAllowed(batchSize, batch.getPoints().get(0).getKey())) {
-            log.debug("Dropping {} metrics due to rate limiting", batchSize);
-            statistics.reportMetricsDroppedByRateLimit(batchSize);
-            return;
+        hyperLog.offer(batch.hashCode());
+        statistics.reportMetricsCardinality(batch.hashCode());
+
+        if (!Arrays.asList(KEYS_NEVER_TO_DROP).contains(batch.getPoints().get(0).getKey())) {
+            if (batchSize > 0 && !rateLimitAllowed(batchSize)) {
+                log.debug("Dropping {} metrics due to rate limiting", batchSize);
+                statistics.reportMetricsDroppedByRateLimit(batchSize);
+                return;
+            }
+
+            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
+              log.debug(
+                  "Dropping {} metrics due to cardinality limiting; cardinality {}",
+                  batchSize,
+                  hyperLog.cardinality());
+              statistics.reportMetricsDroppedByCardinalityLimit(batchSize);
+              return;
+            }
         }
 
         sinks.stream()
@@ -207,9 +258,8 @@ public class CoreOutputManager implements OutputManager {
         return async.collectAndDiscard(futures);
     }
 
-    private boolean rateLimitAllowed(int permits, String key) {
-        if (rateLimiter == null
-            || Arrays.asList(KEYS_NEVER_TO_DROP).contains(key)) {
+    private boolean rateLimitAllowed(int permits) {
+        if (rateLimiter == null) {
             return true;
         }
         try {
@@ -218,6 +268,10 @@ public class CoreOutputManager implements OutputManager {
             // Thrown if permits > max capacity or permits is not a positive number
             return false;
         }
+    }
+
+    private boolean cardinalityLimitAllowed(long currentCardinality) {
+        return cardinalityLimit == null || cardinalityLimit >= currentCardinality;
     }
 
     /**

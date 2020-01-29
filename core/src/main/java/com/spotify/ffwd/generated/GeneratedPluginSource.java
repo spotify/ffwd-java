@@ -48,7 +48,7 @@ public class GeneratedPluginSource implements PluginSource {
     @Inject
     private OutputManager output;
 
-    private final int count = 10000;
+    private final int count = 10;
 
     private volatile AsyncFuture<Void> task;
     private volatile List<Metric> metrics;

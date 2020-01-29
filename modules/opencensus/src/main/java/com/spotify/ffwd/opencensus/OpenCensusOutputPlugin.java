@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 public class OpenCensusOutputPlugin extends OutputPlugin {
     private final RetryPolicy retry;
     private final Optional<String> gcpProject;
+    private final Optional<Integer> maxViews;
+    private final Optional<String> outputMetricNamePattern;
 
     @JsonCreator
     public OpenCensusOutputPlugin(
@@ -45,11 +47,15 @@ public class OpenCensusOutputPlugin extends OutputPlugin {
         @JsonProperty("filter") Optional<Filter> filter,
         @JsonProperty("flushInterval") @Nullable Long flushInterval,
         @JsonProperty("batching") Optional<Batching> batching,
-        @JsonProperty("gcpProject") Optional<String> gcpProject
+        @JsonProperty("gcpProject") Optional<String> gcpProject,
+        @JsonProperty("maxViews") Optional<Integer> maxViews,
+        @JsonProperty("outputMetricNamePattern") Optional<String> outputMetricNamePattern
     ) {
         super(filter, Batching.from(flushInterval, batching));
         this.retry = Optional.ofNullable(retry).orElseGet(RetryPolicy.Exponential::new);
         this.gcpProject = gcpProject;
+        this.maxViews = maxViews;
+        this.outputMetricNamePattern = outputMetricNamePattern;
     }
 
     @Override
@@ -58,7 +64,9 @@ public class OpenCensusOutputPlugin extends OutputPlugin {
             @Override
             protected void configure() {
                 bind(Logger.class).toInstance(LoggerFactory.getLogger(id));
-                bind(key).toInstance(new OpenCensusPluginSink(gcpProject));
+                bind(key).toInstance(
+                    new OpenCensusPluginSink(gcpProject, maxViews, outputMetricNamePattern)
+                );
                 expose(key);
             }
         };

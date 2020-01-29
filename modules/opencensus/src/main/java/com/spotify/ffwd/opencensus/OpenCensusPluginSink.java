@@ -48,6 +48,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.apache.commons.text.StringSubstitutor;
 import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -75,25 +76,34 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
   private static final StatsRecorder statsRecorder = Stats.getStatsRecorder();
 
   private Optional<String> gcpProject;
+  private int maxViews;
+  private String outputMetricNamePattern;
 
   public void init() {
     // Is this actually needed, not sure. Better safe than sorry!
-    measures = new ConcurrentHashMap();
+    measures = new ConcurrentHashMap<String, MeasureLong>();
   }
 
-  public OpenCensusPluginSink(Optional<String> gcpProject) {
+  public OpenCensusPluginSink(Optional<String> gcpProject, Optional<Integer> maxViews,
+      Optional<String> outputMetricNamePattern) {
     this.gcpProject = gcpProject;
+    this.maxViews = maxViews.orElse(10000);
+    this.outputMetricNamePattern = outputMetricNamePattern.orElse("${key}_${what}");
   }
 
   public void sendMetric(Metric metric) {
     try {
-      MeasureLong measure = measures.get(metric.getKey());
+      String metricName = getOutputMetricName(metric);
+      MeasureLong measure = measures.get(metricName);
+
       if (measure == null) {
-        // If we keep getting new metrics, this will keep growing forever. But as
-        // there doesn't seem to be a way to unregister a view, it's not obvious what
-        // the right thing to do is here.
+        if (measures.size() > maxViews) {
+          throw new RuntimeException("maxViews exceeded. " +
+              "Please increase in configuration or decrease number of metrics.");
+        }
+
         measure = MeasureLong.create("Events", "Number of Events", "1");
-        measures.put(metric.getKey(), measure);
+        measures.put(metricName, measure);
 
         // Stackdriver expects each metric to have the same set of tags so metrics
         // missing tags will be rejected. NB by default stackdriver will create
@@ -105,8 +115,8 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
         });
         final View view =
             View.create(
-                Name.create(metric.getKey()),
-                metric.getKey(),
+                Name.create(metricName),
+                metricName,
                 measure,
                 Sum.create(),
                 columns);
@@ -115,7 +125,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
       }
       final TagContextBuilder builder = tagger.emptyBuilder();
       metric.getTags().forEach((k, v) -> {
-          builder.put(TagKey.create(k), TagValue.create(v));
+          builder.putPropagating(TagKey.create(k), TagValue.create(v));
       });
       final TagContext context = builder.build();
 
@@ -163,6 +173,17 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
 
   public boolean isReady() {
     return true;
+  }
+
+  private String getOutputMetricName(Metric metric) {
+    StringSubstitutor sub = new StringSubstitutor((key) -> {
+      if (key.equals("key")) {
+        return metric.getKey();
+      } else {
+        return metric.getTags().get(key);
+      }
+    });
+    return sub.replace(outputMetricNamePattern);
   }
 
 }

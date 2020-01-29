@@ -57,18 +57,21 @@ public class OutputManagerModule {
     private final Filter filter;
     @Nullable private final Integer rateLimit;
     @Nullable private final Long cardinalityLimit;
+    @Nullable private final Long hyperLogLogPlusSwapPeriod;
 
     @JsonCreator
     public OutputManagerModule(
         @JsonProperty("plugins") List<OutputPlugin> plugins,
         @JsonProperty("filter") Filter filter,
         @JsonProperty("ratelimit") @Nullable Integer rateLimit,
-        @JsonProperty("cardinalitylimit") @Nullable Long cardinalityLimit
+        @JsonProperty("cardinalitylimit") @Nullable Long cardinalityLimit,
+        @JsonProperty("hyperloglogswapperiod") @Nullable Long hyperLogLogPlusSwapPeriod
     ) {
         this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
         this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);
         this.rateLimit = rateLimit;
         this.cardinalityLimit = cardinalityLimit;
+        this.hyperLogLogPlusSwapPeriod = hyperLogLogPlusSwapPeriod;
     }
 
     public Module module() {
@@ -171,6 +174,14 @@ public class OutputManagerModule {
                 return cardinalityLimit;
             }
 
+            @Provides
+            @Singleton
+            @Named("hyperLogLogPlusSwapPeriod")
+            @Nullable
+            public Long hyperLogLogPlusSwapPeriod() {
+                return hyperLogLogPlusSwapPeriod;
+            }
+
             @Override
             protected void configure() {
                 bind(OutputManager.class).to(CoreOutputManager.class).in(Scopes.SINGLETON);
@@ -246,6 +257,6 @@ public class OutputManagerModule {
     }
 
     public static Supplier<OutputManagerModule> supplyDefault() {
-        return () -> new OutputManagerModule(null, null, null, null);
+        return () -> new OutputManagerModule(null, null, null, null, null);
     }
 }

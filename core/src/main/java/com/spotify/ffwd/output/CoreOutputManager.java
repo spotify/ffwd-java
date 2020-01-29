@@ -38,8 +38,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.isomorphism.util.TokenBucket;
@@ -116,6 +119,9 @@ public class CoreOutputManager implements OutputManager {
     private Filter filter;
 
     private HyperLogLogPlus hyperLog;
+    private AtomicLong hyperLogSwapTS;
+    private AtomicBoolean hyperLogSwapLock;
+    private Long hyperLogLogPlusSwapPeriod;
 
     public final Long getRateLimit() {
         if (rateLimiter == null) {
@@ -131,9 +137,17 @@ public class CoreOutputManager implements OutputManager {
         return cardinalityLimit;
     }
 
+    public final Long getHLLPRefreshPeriodLimit() {
+        if (hyperLogLogPlusSwapPeriod == null) {
+            return null;
+        }
+        return hyperLogLogPlusSwapPeriod;
+    }
+
     @Inject
     CoreOutputManager(@Named("rateLimit") @Nullable Integer rateLimit,
-        @Named("cardinalityLimit") @Nullable Long cardinalityLimit) {
+        @Named("cardinalityLimit") @Nullable Long cardinalityLimit,
+        @Named("hyperLogLogPlusSwapPeriod") @Nullable Long hyperLogLogPlusSwapPeriod) {
 
         if (rateLimit != null && rateLimit > 0) {
             // Create a rate limiter with a configurable QPS, and
@@ -148,15 +162,21 @@ public class CoreOutputManager implements OutputManager {
             rateLimiter = null;
         }
 
+        hyperLog = new HyperLogLogPlus(14, 25);
+        hyperLogSwapTS =  new AtomicLong(System.currentTimeMillis());
+        hyperLogSwapLock = new AtomicBoolean(false);
+        this.hyperLogLogPlusSwapPeriod =
+            Optional.ofNullable(hyperLogLogPlusSwapPeriod).orElse(3_600_000L);
+
         if (cardinalityLimit != null && cardinalityLimit > 0) {
             // Use cardinalityLimit to limit cardinality
-            log.info("Initializing cardinality limiting: {}", cardinalityLimit);
+            log.info("Initializing cardinality limit: {}", cardinalityLimit);
+            log.info("Initializing HyperLogLogPlus swap time: {} ms",
+                hyperLogLogPlusSwapPeriod);
             this.cardinalityLimit = cardinalityLimit;
         } else {
             this.cardinalityLimit = null;
         }
-
-        hyperLog = new HyperLogLogPlus(14, 25);
     }
 
     @Override
@@ -194,6 +214,7 @@ public class CoreOutputManager implements OutputManager {
                   "Dropping a metric due to cardinality limiting; cardinality {}",
                   hyperLog.cardinality());
               statistics.reportMetricsDroppedByCardinalityLimit(1);
+              swapHyperLogLogPlus();
               return;
             }
         }
@@ -229,6 +250,7 @@ public class CoreOutputManager implements OutputManager {
                   batchSize,
                   hyperLog.cardinality());
               statistics.reportMetricsDroppedByCardinalityLimit(batchSize);
+              swapHyperLogLogPlus();
               return;
             }
         }
@@ -272,6 +294,18 @@ public class CoreOutputManager implements OutputManager {
 
     private boolean cardinalityLimitAllowed(long currentCardinality) {
         return cardinalityLimit == null || cardinalityLimit >= currentCardinality;
+    }
+
+    /**
+    * To reset cardinality this will swap HLL++ if it was tripped after configured period of ms
+    */
+    private void swapHyperLogLogPlus() {
+        if (System.currentTimeMillis() - hyperLogSwapTS.get() > hyperLogLogPlusSwapPeriod
+            && hyperLogSwapLock.compareAndExchange(false, true)) {
+          hyperLog = new HyperLogLogPlus(14, 25);
+          hyperLogSwapTS = new AtomicLong(System.currentTimeMillis());
+          hyperLogSwapLock.set(false);
+        }
     }
 
     /**

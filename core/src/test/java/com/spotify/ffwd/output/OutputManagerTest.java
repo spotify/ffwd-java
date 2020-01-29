@@ -81,6 +81,7 @@ public class OutputManagerTest {
     private long ttl = 0L;
     private Integer rateLimit = null;
     private Long cardinalityLimit = null;
+    private Long hyperLogLogPlusSwapPeriod = null;
 
     @Mock
     private DebugServer debugServer;
@@ -138,6 +139,7 @@ public class OutputManagerTest {
                 bind(Filter.class).toInstance(filter);
                 bind(OutputManager.class).to(CoreOutputManager.class);
                 bind(Long.class).annotatedWith(Names.named("cardinalityLimit")).toProvider(Providers.of(cardinalityLimit));
+                bind(Long.class).annotatedWith(Names.named("hyperLogLogPlusSwapPeriod")).toProvider(Providers.of(hyperLogLogPlusSwapPeriod));
             }
         });
 
@@ -292,6 +294,34 @@ public class OutputManagerTest {
         outputManager.sendMetric(mKey);
 
         verify(sink, times(sendNum)).sendMetric(captor.capture());
+    }
+
+    @Test
+    public void testBatchCardinalityDroppingWithSwap() {
+        cardinalityLimit = 20L;
+        hyperLogLogPlusSwapPeriod = 2000L;
+        int sendNum = 20;
+        CoreOutputManager outputManager = (CoreOutputManager) createOutputManager();
+        ArgumentCaptor<Metric> captor = ArgumentCaptor.forClass(Metric.class);
+
+        // Send a burst of metrics, all should be accepted
+        for (int i = 0; i < sendNum; i++) {
+            outputManager.sendMetric(new Metric("main-key"+i, 42.0, new Date(), ImmutableSet.of(), Map.of("key"+i,"value"+i), ImmutableMap.of(), null));
+        }
+
+        // This metric shouldn't be dropped
+        Metric mKey = new Metric("ffwd-java", 42.0, new Date(), ImmutableSet.of(), ImmutableMap.of(), ImmutableMap.of(), null);
+        outputManager.sendMetric(mKey);
+
+        // This should give enough time to reset HLL++ in the next .sendMetric(..)
+        try{Thread.sleep(2500);}catch(InterruptedException e){System.out.println(e);}
+
+        // This should allow most of the metrics to be sent even though the cardinality is high
+        for (int i = 0; i < sendNum; i++) {
+            outputManager.sendMetric(new Metric("main-key"+i, 42.0, new Date(), ImmutableSet.of(), Map.of("key"+i,"value"+i), ImmutableMap.of(), null));
+        }
+
+        verify(sink, times(39)).sendMetric(captor.capture());
     }
 
     private Metric sendAndCaptureMetric(Metric metric) {

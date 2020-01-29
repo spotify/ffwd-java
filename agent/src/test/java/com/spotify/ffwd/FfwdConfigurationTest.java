@@ -90,12 +90,14 @@ public class FfwdConfigurationTest {
         environmentVariables.set("FFWD_TTL", "100");
         environmentVariables.set("FFWD_OUTPUT_RATELIMIT", "1000");
         environmentVariables.set("FFWD_OUTPUT_CARDINALITYLIMIT", "10000");
+        environmentVariables.set("FFWD_OUTPUT_HYPERLOGLOGSWAPPERIOD", "3000000");
 
         CoreOutputManager outputManager = getOutputManager(null);
 
         assertEquals(100, outputManager.getTtl());
         assertEquals(Long.valueOf(1000), outputManager.getRateLimit());
         assertEquals(Long.valueOf(10000), outputManager.getCardinalityLimit());
+        assertEquals(Long.valueOf(3000000), outputManager.getHLLPRefreshPeriodLimit());
     }
 
     @Test
@@ -115,6 +117,7 @@ public class FfwdConfigurationTest {
         assertEquals(100, outputManager.getTtl());
         assertEquals("jimjam", outputManager.getHost());
         assertEquals(Long.valueOf(10000), outputManager.getCardinalityLimit());
+        assertEquals(Long.valueOf(555555), outputManager.getHLLPRefreshPeriodLimit());
     }
 
     private CoreOutputManager getOutputManager(final Path configPath) {

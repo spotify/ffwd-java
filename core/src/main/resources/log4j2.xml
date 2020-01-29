@@ -9,7 +9,7 @@
     <Logger name="kafka.consumer" level="INFO" additivity="false">
       <AppenderRef ref="primary" />
     </Logger>
-    <Logger name="com.spotify.ffwd" level="WARN" additivity="false">
+    <Logger name="com.spotify.ffwd" level="INFO" additivity="false">
       <AppenderRef ref="primary" />
     </Logger>
     <Logger name="io.netty" level="WARN" additivity="false">

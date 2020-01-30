@@ -2,4 +2,4 @@ ttl: 50
 host: jimjam
 output:
   cardinalitylimit: 10000
-  hyperloglogswapperiodms: 555555
+  cardinalityttl: 555555

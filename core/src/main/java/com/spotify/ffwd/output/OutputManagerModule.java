@@ -65,7 +65,7 @@ public class OutputManagerModule {
         @JsonProperty("filter") Filter filter,
         @JsonProperty("ratelimit") @Nullable Integer rateLimit,
         @JsonProperty("cardinalitylimit") @Nullable Long cardinalityLimit,
-        @JsonProperty("hyperloglogswapperiodms") @Nullable Long hyperLogLogPlusSwapPeriodMS
+        @JsonProperty("cardinalityttl") @Nullable Long hyperLogLogPlusSwapPeriodMS
     ) {
         this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
         this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);

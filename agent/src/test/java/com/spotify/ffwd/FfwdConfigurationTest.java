@@ -90,7 +90,7 @@ public class FfwdConfigurationTest {
         environmentVariables.set("FFWD_TTL", "100");
         environmentVariables.set("FFWD_OUTPUT_RATELIMIT", "1000");
         environmentVariables.set("FFWD_OUTPUT_CARDINALITYLIMIT", "10000");
-        environmentVariables.set("FFWD_OUTPUT_HYPERLOGLOGSWAPPERIODMS", "3000000");
+        environmentVariables.set("FFWD_OUTPUT_CARDINALITYTTL", "3000000");
 
         CoreOutputManager outputManager = getOutputManager(null);
 

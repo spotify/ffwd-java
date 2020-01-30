@@ -64,6 +64,6 @@ public interface OutputManagerStatistics {
      *
      * @param cardinality The cardinality number of metrics sent.
      */
-    default void reportMetricsCardinality(int cardinality) {
+    default void reportMetricsCardinality(long cardinality) {
     }
 }

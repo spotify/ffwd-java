@@ -81,7 +81,7 @@ public class OutputManagerTest {
     private long ttl = 0L;
     private Integer rateLimit = null;
     private Long cardinalityLimit = null;
-    private Long hyperLogLogPlusSwapPeriod = null;
+    private Long hyperLogLogPlusSwapPeriodMS = null;
 
     @Mock
     private DebugServer debugServer;
@@ -139,7 +139,8 @@ public class OutputManagerTest {
                 bind(Filter.class).toInstance(filter);
                 bind(OutputManager.class).to(CoreOutputManager.class);
                 bind(Long.class).annotatedWith(Names.named("cardinalityLimit")).toProvider(Providers.of(cardinalityLimit));
-                bind(Long.class).annotatedWith(Names.named("hyperLogLogPlusSwapPeriod")).toProvider(Providers.of(hyperLogLogPlusSwapPeriod));
+                bind(Long.class).annotatedWith(Names.named("hyperLogLogPlusSwapPeriodMS")).toProvider(Providers.of(
+                    hyperLogLogPlusSwapPeriodMS));
             }
         });
 
@@ -299,7 +300,7 @@ public class OutputManagerTest {
     @Test
     public void testBatchCardinalityDroppingWithSwap() {
         cardinalityLimit = 20L;
-        hyperLogLogPlusSwapPeriod = 2000L;
+        hyperLogLogPlusSwapPeriodMS = 2000L;
         int sendNum = 20;
         CoreOutputManager outputManager = (CoreOutputManager) createOutputManager();
         ArgumentCaptor<Metric> captor = ArgumentCaptor.forClass(Metric.class);

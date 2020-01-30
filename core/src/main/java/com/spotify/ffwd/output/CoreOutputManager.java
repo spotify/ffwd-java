@@ -55,6 +55,8 @@ public class CoreOutputManager implements OutputManager {
     private static final String HOST = "host";
     private static final Logger log = LoggerFactory.getLogger(CoreOutputManager.class);
     private static final String[] KEYS_NEVER_TO_DROP = {"ffwd-java", "ffwd-java.ffwd-java"};
+    private static final int HYPER_LOG_LOG_PLUS_PRECISION_NORMAL = 14;
+    private static final int HYPER_LOG_LOG_PLUS_PRECISION_SPARSE = 25;
 
     private final TokenBucket rateLimiter;
     private final Long cardinalityLimit;
@@ -121,7 +123,7 @@ public class CoreOutputManager implements OutputManager {
     private HyperLogLogPlus hyperLog;
     private AtomicLong hyperLogSwapTS;
     private AtomicBoolean hyperLogSwapLock;
-    private Long hyperLogLogPlusSwapPeriod;
+    private Long hyperLogLogPlusSwapPeriodMS;
 
     public final Long getRateLimit() {
         if (rateLimiter == null) {
@@ -138,16 +140,16 @@ public class CoreOutputManager implements OutputManager {
     }
 
     public final Long getHLLPRefreshPeriodLimit() {
-        if (hyperLogLogPlusSwapPeriod == null) {
+        if (hyperLogLogPlusSwapPeriodMS == null) {
             return null;
         }
-        return hyperLogLogPlusSwapPeriod;
+        return hyperLogLogPlusSwapPeriodMS;
     }
 
     @Inject
     CoreOutputManager(@Named("rateLimit") @Nullable Integer rateLimit,
         @Named("cardinalityLimit") @Nullable Long cardinalityLimit,
-        @Named("hyperLogLogPlusSwapPeriod") @Nullable Long hyperLogLogPlusSwapPeriod) {
+        @Named("hyperLogLogPlusSwapPeriodMS") @Nullable Long hyperLogLogPlusSwapPeriodMS) {
 
         if (rateLimit != null && rateLimit > 0) {
             // Create a rate limiter with a configurable QPS, and
@@ -162,17 +164,19 @@ public class CoreOutputManager implements OutputManager {
             rateLimiter = null;
         }
 
-        hyperLog = new HyperLogLogPlus(14, 25);
+        hyperLog =
+            new HyperLogLogPlus(
+                HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE);
         hyperLogSwapTS =  new AtomicLong(System.currentTimeMillis());
         hyperLogSwapLock = new AtomicBoolean(false);
-        this.hyperLogLogPlusSwapPeriod =
-            Optional.ofNullable(hyperLogLogPlusSwapPeriod).orElse(3_600_000L);
+        this.hyperLogLogPlusSwapPeriodMS =
+            Optional.ofNullable(hyperLogLogPlusSwapPeriodMS).orElse(3_600_000L);
 
         if (cardinalityLimit != null && cardinalityLimit > 0) {
             // Use cardinalityLimit to limit cardinality
             log.info("Initializing cardinality limit: {}", cardinalityLimit);
             log.info("Initializing HyperLogLogPlus swap time: {} ms",
-                hyperLogLogPlusSwapPeriod);
+                this.hyperLogLogPlusSwapPeriodMS);
             this.cardinalityLimit = cardinalityLimit;
         } else {
             this.cardinalityLimit = null;
@@ -200,23 +204,10 @@ public class CoreOutputManager implements OutputManager {
         debug.inspectMetric(DEBUG_ID, filtered);
 
         hyperLog.offer(metric.hashCode());
-        statistics.reportMetricsCardinality(metric.hashCode());
+        statistics.reportMetricsCardinality(hyperLog.cardinality());
 
-        if (!Arrays.asList(KEYS_NEVER_TO_DROP).contains(metric.getKey())) {
-            if (!rateLimitAllowed(1)) {
-                log.debug("Dropping a metric due to rate limiting");
-                statistics.reportMetricsDroppedByRateLimit(1);
-                return;
-            }
-
-            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
-              log.debug(
-                  "Dropping a metric due to cardinality limiting; cardinality {}",
-                  hyperLog.cardinality());
-              statistics.reportMetricsDroppedByCardinalityLimit(1);
-              swapHyperLogLogPlus();
-              return;
-            }
+        if (isDroppable(1, metric.getKey())) {
+            return;
         }
 
         sinks.stream()
@@ -235,24 +226,10 @@ public class CoreOutputManager implements OutputManager {
         int batchSize = batch.getPoints().size();
 
         hyperLog.offer(batch.hashCode());
-        statistics.reportMetricsCardinality(batch.hashCode());
+        statistics.reportMetricsCardinality(hyperLog.cardinality());
 
-        if (!Arrays.asList(KEYS_NEVER_TO_DROP).contains(batch.getPoints().get(0).getKey())) {
-            if (batchSize > 0 && !rateLimitAllowed(batchSize)) {
-                log.debug("Dropping {} metrics due to rate limiting", batchSize);
-                statistics.reportMetricsDroppedByRateLimit(batchSize);
-                return;
-            }
-
-            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
-              log.debug(
-                  "Dropping {} metrics due to cardinality limiting; cardinality {}",
-                  batchSize,
-                  hyperLog.cardinality());
-              statistics.reportMetricsDroppedByCardinalityLimit(batchSize);
-              swapHyperLogLogPlus();
-              return;
-            }
+        if (isDroppable(batchSize, batch.getPoints().get(0).getKey())) {
+            return;
         }
 
         sinks.stream()
@@ -300,12 +277,40 @@ public class CoreOutputManager implements OutputManager {
     * To reset cardinality this will swap HLL++ if it was tripped after configured period of ms
     */
     private void swapHyperLogLogPlus() {
-        if (System.currentTimeMillis() - hyperLogSwapTS.get() > hyperLogLogPlusSwapPeriod
+        if (System.currentTimeMillis() - hyperLogSwapTS.get() > hyperLogLogPlusSwapPeriodMS
             && hyperLogSwapLock.compareAndExchange(false, true)) {
-          hyperLog = new HyperLogLogPlus(14, 25);
-          hyperLogSwapTS = new AtomicLong(System.currentTimeMillis());
-          hyperLogSwapLock.set(false);
+            hyperLog =
+                new HyperLogLogPlus(
+                    HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE);
+            hyperLogSwapTS.set(System.currentTimeMillis());
+            hyperLogSwapLock.set(false);
         }
+    }
+
+    /**
+     * Makes sure either batch or individual metric should be dropped either
+     *  1. by rate limit
+     *  2. by cardinality limit
+     */
+    private boolean isDroppable(final int batchSize, String key) {
+        if (!Arrays.asList(KEYS_NEVER_TO_DROP).contains(key)) {
+            if (batchSize > 0 && !rateLimitAllowed(batchSize)) {
+                log.debug("Dropping {} metrics due to rate limiting", batchSize);
+                statistics.reportMetricsDroppedByRateLimit(batchSize);
+                return true;
+            }
+
+            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
+              log.debug(
+                  "Dropping {} metrics due to cardinality limiting; cardinality {}",
+                  batchSize,
+                  hyperLog.cardinality());
+              statistics.reportMetricsDroppedByCardinalityLimit(batchSize);
+              swapHyperLogLogPlus();
+              return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -57,7 +57,7 @@ public class OutputManagerModule {
     private final Filter filter;
     @Nullable private final Integer rateLimit;
     @Nullable private final Long cardinalityLimit;
-    @Nullable private final Long hyperLogLogPlusSwapPeriod;
+    @Nullable private final Long hyperLogLogPlusSwapPeriodMS;
 
     @JsonCreator
     public OutputManagerModule(
@@ -65,13 +65,13 @@ public class OutputManagerModule {
         @JsonProperty("filter") Filter filter,
         @JsonProperty("ratelimit") @Nullable Integer rateLimit,
         @JsonProperty("cardinalitylimit") @Nullable Long cardinalityLimit,
-        @JsonProperty("hyperloglogswapperiod") @Nullable Long hyperLogLogPlusSwapPeriod
+        @JsonProperty("hyperloglogswapperiodms") @Nullable Long hyperLogLogPlusSwapPeriodMS
     ) {
         this.plugins = Optional.ofNullable(plugins).orElse(DEFAULT_PLUGINS);
         this.filter = Optional.ofNullable(filter).orElseGet(TrueFilter::new);
         this.rateLimit = rateLimit;
         this.cardinalityLimit = cardinalityLimit;
-        this.hyperLogLogPlusSwapPeriod = hyperLogLogPlusSwapPeriod;
+        this.hyperLogLogPlusSwapPeriodMS = hyperLogLogPlusSwapPeriodMS;
     }
 
     public Module module() {
@@ -176,10 +176,10 @@ public class OutputManagerModule {
 
             @Provides
             @Singleton
-            @Named("hyperLogLogPlusSwapPeriod")
+            @Named("hyperLogLogPlusSwapPeriodMS")
             @Nullable
-            public Long hyperLogLogPlusSwapPeriod() {
-                return hyperLogLogPlusSwapPeriod;
+            public Long hyperLogLogPlusSwapPeriodMS() {
+                return hyperLogLogPlusSwapPeriodMS;
             }
 
             @Override

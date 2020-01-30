@@ -33,7 +33,7 @@ import eu.toolchain.async.FutureFinished;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class SemanticCoreStatistics implements CoreStatistics {
     private static final int HISTOGRAM_TTL_MINUTES = 2;
@@ -86,7 +86,7 @@ public class SemanticCoreStatistics implements CoreStatistics {
     @Override
     public OutputManagerStatistics newOutputManager() {
         final MetricId m = metric.tagged("component", "output-manager");
-        final AtomicInteger metricsCardinality = new AtomicInteger();
+        final AtomicLong metricsCardinality = new AtomicLong();
 
         return new OutputManagerStatistics() {
             private final Counter sentMetrics =
@@ -123,7 +123,7 @@ public class SemanticCoreStatistics implements CoreStatistics {
             }
 
             @Override
-            public void reportMetricsCardinality(int cardinality) {
+            public void reportMetricsCardinality(long cardinality) {
                 metricsCardinality.set(cardinality);
             }
         };

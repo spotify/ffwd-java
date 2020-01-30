@@ -43,6 +43,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.isomorphism.util.TokenBucket;
@@ -120,7 +121,7 @@ public class CoreOutputManager implements OutputManager {
     @Inject
     private Filter filter;
 
-    private HyperLogLogPlus hyperLog;
+    private AtomicReference<HyperLogLogPlus> hyperLog;
     private AtomicLong hyperLogSwapTS;
     private AtomicBoolean hyperLogSwapLock;
     private Long hyperLogLogPlusSwapPeriodMS;
@@ -133,16 +134,10 @@ public class CoreOutputManager implements OutputManager {
     }
 
     public final Long getCardinalityLimit() {
-        if (cardinalityLimit == null) {
-            return null;
-        }
         return cardinalityLimit;
     }
 
     public final Long getHLLPRefreshPeriodLimit() {
-        if (hyperLogLogPlusSwapPeriodMS == null) {
-            return null;
-        }
         return hyperLogLogPlusSwapPeriodMS;
     }
 
@@ -164,9 +159,8 @@ public class CoreOutputManager implements OutputManager {
             rateLimiter = null;
         }
 
-        hyperLog =
-            new HyperLogLogPlus(
-                HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE);
+        hyperLog = new AtomicReference<>(new HyperLogLogPlus(
+                HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE));
         hyperLogSwapTS =  new AtomicLong(System.currentTimeMillis());
         hyperLogSwapLock = new AtomicBoolean(false);
         this.hyperLogLogPlusSwapPeriodMS =
@@ -203,8 +197,8 @@ public class CoreOutputManager implements OutputManager {
 
         debug.inspectMetric(DEBUG_ID, filtered);
 
-        hyperLog.offer(metric.hashCode());
-        statistics.reportMetricsCardinality(hyperLog.cardinality());
+        hyperLog.get().offer(metric.hashCode());
+        statistics.reportMetricsCardinality(hyperLog.get().cardinality());
 
         if (isDroppable(1, metric.getKey())) {
             return;
@@ -225,8 +219,8 @@ public class CoreOutputManager implements OutputManager {
 
         int batchSize = batch.getPoints().size();
 
-        hyperLog.offer(batch.hashCode());
-        statistics.reportMetricsCardinality(hyperLog.cardinality());
+        hyperLog.get().offer(batch.hashCode());
+        statistics.reportMetricsCardinality(hyperLog.get().cardinality());
 
         if (isDroppable(batchSize, batch.getPoints().get(0).getKey())) {
             return;
@@ -279,9 +273,8 @@ public class CoreOutputManager implements OutputManager {
     private void swapHyperLogLogPlus() {
         if (System.currentTimeMillis() - hyperLogSwapTS.get() > hyperLogLogPlusSwapPeriodMS
             && hyperLogSwapLock.compareAndExchange(false, true)) {
-            hyperLog =
-                new HyperLogLogPlus(
-                    HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE);
+            hyperLog.set(new HyperLogLogPlus(
+                    HYPER_LOG_LOG_PLUS_PRECISION_NORMAL, HYPER_LOG_LOG_PLUS_PRECISION_SPARSE));
             hyperLogSwapTS.set(System.currentTimeMillis());
             hyperLogSwapLock.set(false);
         }
@@ -300,11 +293,11 @@ public class CoreOutputManager implements OutputManager {
                 return true;
             }
 
-            if (!cardinalityLimitAllowed(hyperLog.cardinality())) {
+            if (!cardinalityLimitAllowed(hyperLog.get().cardinality())) {
               log.debug(
                   "Dropping {} metrics due to cardinality limiting; cardinality {}",
                   batchSize,
-                  hyperLog.cardinality());
+                  hyperLog.get().cardinality());
               statistics.reportMetricsDroppedByCardinalityLimit(batchSize);
               swapHyperLogLogPlus();
               return true;

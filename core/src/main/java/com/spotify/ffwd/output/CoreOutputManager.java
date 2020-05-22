@@ -223,8 +223,7 @@ public class CoreOutputManager implements OutputManager {
 
         BatchMetricConverter
             .convertBatchesToMetrics(Collections.singletonList(batch))
-            .stream().map(metric -> hyperLog.get().offer(metric.hashCode()))
-            .collect(Collectors.toList());
+            .stream().forEach(metric -> hyperLog.get().offer(metric.hashCode()));
 
         statistics.reportMetricsCardinality(hyperLog.get().cardinality());
 

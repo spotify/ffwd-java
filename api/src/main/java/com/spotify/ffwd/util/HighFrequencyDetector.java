@@ -29,33 +29,37 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * Class responsible for high frequency metrics detection.
+ * All batched metrics will be examined.
+ * If configured will drop metrics marked as high frequency.
+ */
 public class HighFrequencyDetector {
 
   /** Allow to drop high frequency metrics. */
   @Inject
   @Named("dropHighFrequencyMetric")
-  Boolean dropHighFrequencyMetric;
+  boolean dropHighFrequencyMetric;
 
   /** Minimum number of milliseconds allowed between data points. */
   @Inject
   @Named("minFrequencyMillisAllowed")
-  Integer minFrequencyMillisAllowed;
+  int minFrequencyMillisAllowed;
 
   /** Minimum number of times high frequency detected before metrics are dropped. */
   @Inject
   @Named("minNumberOfTriggers")
-  Integer minNumberOfTriggers;
+  int minNumberOfTriggers;
 
   /** Milliseconds high frequency triggers are refreshed. */
   @Inject
   @Named("highFrequencyDataRecycleMS")
-  Long highFrequencyDataRecycleMS;
+  long highFrequencyDataRecycleMS;
 
   @Inject
   private HighFrequencyDetectorStatistics statistics;
@@ -66,7 +70,7 @@ public class HighFrequencyDetector {
       new AtomicReference<>(new HashMap<>());
 
   final AtomicLong highFrequencyTriggersTS;
-  private AtomicBoolean highFrequencyRecycleLock;
+  private final Object lock = new Object();
 
   /* TODO
       1. unit tests
@@ -78,13 +82,19 @@ public class HighFrequencyDetector {
   @Inject
   public HighFrequencyDetector() {
     this.highFrequencyTriggersTS = new AtomicLong(System.currentTimeMillis());
-    this.highFrequencyRecycleLock = new AtomicBoolean(false);
   }
 
-  public List<Metric> detectHighFrequencyMetrics(final List<Metric> metrics) {
+  /**
+   * Detects high frequency metrics by grouping and calculating
+   * time delta between metric timestamps
+   *
+   * @param metrics
+   * @return list of filtered metrics
+   */
+  public List<Metric> detect(final List<Metric> metrics) {
     List<Metric> newList = new ArrayList<>();
 
-    // Groups metrics by metric hash code and finds timestamp deltas of ordered data points.
+    // Groups metrics by metric hash code and finds times deltas of ordered data points.
     // {hashcode -> -1, hashcode1 -> 10}
     Map<Integer, Integer> groupedMetrics =
         metrics.stream()
@@ -94,36 +104,36 @@ public class HighFrequencyDetector {
                     Metric::hashCode,
                     Collectors.collectingAndThen(
                         Collectors.toList(),
-                        list -> {
-                          int size = list.size();
-                          return IntStream.range(1, size)
-                              .map(
-                                  x ->
-                                      (int)
-                                          (list.get(size - x).getTime().getTime()
-                                              - list.get(size - x - 1).getTime().getTime()))
-                              .filter(d -> (d >= 0 && d < minFrequencyMillisAllowed))
-                              .min()
-                              .orElse(-1);
-                        })));
+                        this::computeTimeDelta)));
 
-    if (dropHighFrequencyMetric) {
-      updateHighFrequencyMetricsStats(groupedMetrics);
+    updateHighFrequencyMetricsStats(groupedMetrics);
 
-      if (highFrequencyMetrics.get().size() > 0) {
-        metrics.stream()
-            .filter(
-                metric ->
-                    highFrequencyMetrics.get().getOrDefault(metric.hashCode(), 0)
-                        < minNumberOfTriggers)
-            .forEach(newList::add);
+    if (dropHighFrequencyMetric && highFrequencyMetrics.get().size() > 0) {
+      metrics.stream()
+          .filter(
+              metric ->
+                  highFrequencyMetrics.get().getOrDefault(metric.hashCode(), 0)
+                      < minNumberOfTriggers)
+          .forEach(newList::add);
 
-        statistics.reportHighFrequencyMetricsDropped(metrics.size() - newList.size());
-        return newList;
-      }
+      statistics.reportHighFrequencyMetricsDropped(metrics.size() - newList.size());
+      return newList;
     }
 
     return metrics;
+  }
+
+  private int computeTimeDelta(List<Metric> list) {
+    int size = list.size();
+    return IntStream.range(1, size)
+        .map(
+            x ->
+                (int)
+                    (list.get(size - x).getTime().getTime()
+                        - list.get(size - x - 1).getTime().getTime()))
+        .filter(d -> (d >= 0 && d < minFrequencyMillisAllowed))
+        .min()
+        .orElse(-1);
   }
 
   /**
@@ -145,13 +155,13 @@ public class HighFrequencyDetector {
     swapHighFrequencyTriggersData();
   }
 
-  /** This will reset high frequency triggers data */
+  /** Resets high frequency triggers data hashmap */
   private void swapHighFrequencyTriggersData() {
-    if (System.currentTimeMillis() - highFrequencyTriggersTS.get() > highFrequencyDataRecycleMS
-        && highFrequencyRecycleLock.compareAndExchange(false, true)) {
-      highFrequencyMetrics.set(new HashMap<>());
-      highFrequencyTriggersTS.set(System.currentTimeMillis());
-      highFrequencyRecycleLock.set(false);
+    synchronized (lock) {
+      if (System.currentTimeMillis() - highFrequencyTriggersTS.get() > highFrequencyDataRecycleMS) {
+        highFrequencyMetrics.set(new HashMap<>());
+        highFrequencyTriggersTS.set(System.currentTimeMillis());
+      }
     }
   }
 }

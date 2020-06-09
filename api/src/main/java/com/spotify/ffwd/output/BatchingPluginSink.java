@@ -378,7 +378,7 @@ public class BatchingPluginSink implements PluginSink {
 
         if (!batch.metrics.isEmpty()) {
             futures.add(sink
-                .sendMetrics(highFrequencyDetector.detectHighFrequencyMetrics(batch.metrics))
+                .sendMetrics(highFrequencyDetector.detect(batch.metrics))
                 .onFinished(() -> batchingStatistics.reportSentMetrics(batch.metrics.size())));
         }
 

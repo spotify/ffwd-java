@@ -63,10 +63,10 @@ public class OutputManagerModule {
     @Nullable private final Integer rateLimit;
     @Nullable private final Long cardinalityLimit;
     @Nullable private final Long hyperLogLogPlusSwapPeriodMS;
-    private final Boolean dropHighFrequencyMetric;
-    private final Integer minFrequencyMillisAllowed;
-    private final Integer minNumberOfTriggers;
-    private final Long highFrequencyDataRecycleMS;
+    private final boolean dropHighFrequencyMetric;
+    private final int minFrequencyMillisAllowed;
+    private final int minNumberOfTriggers;
+    private final long highFrequencyDataRecycleMS;
 
     @JsonCreator
     public OutputManagerModule(
@@ -213,28 +213,28 @@ public class OutputManagerModule {
             @Provides
             @Singleton
             @Named("dropHighFrequencyMetric")
-            public Boolean dropHighFrequencyMetric() {
+            public boolean dropHighFrequencyMetric() {
                 return dropHighFrequencyMetric;
             }
 
             @Provides
             @Singleton
             @Named("minFrequencyMillisAllowed")
-            public Integer minFrequencyMillisAllowed() {
+            public int minFrequencyMillisAllowed() {
                 return minFrequencyMillisAllowed;
             }
 
             @Provides
             @Singleton
             @Named("minNumberOfTriggers")
-            public Integer minNumberOfTriggers() {
+            public int minNumberOfTriggers() {
                 return minNumberOfTriggers;
             }
 
             @Provides
             @Singleton
             @Named("highFrequencyDataRecycleMS")
-            public Long highFrequencyDataRecycleMS() {
+            public long highFrequencyDataRecycleMS() {
                 return highFrequencyDataRecycleMS;
             }
 

@@ -65,12 +65,10 @@ public class HighFrequencyDetector {
   private HighFrequencyDetectorStatistics statistics;
 
   /** High frequency metrics counter. */
-  // TODO review to use ConcurrentHashMap vs AtomicReference
   final AtomicReference<Map<Integer, Integer>> highFrequencyMetrics =
       new AtomicReference<>(new HashMap<>());
 
   final AtomicLong highFrequencyTriggersTS;
-  private final Object lock = new Object();
 
   /* TODO
       1. unit tests
@@ -156,12 +154,10 @@ public class HighFrequencyDetector {
   }
 
   /** Resets high frequency triggers data hashmap */
-  private void swapHighFrequencyTriggersData() {
-    synchronized (lock) {
-      if (System.currentTimeMillis() - highFrequencyTriggersTS.get() > highFrequencyDataRecycleMS) {
-        highFrequencyMetrics.set(new HashMap<>());
-        highFrequencyTriggersTS.set(System.currentTimeMillis());
-      }
+  private synchronized void swapHighFrequencyTriggersData() {
+    if (System.currentTimeMillis() - highFrequencyTriggersTS.get() > highFrequencyDataRecycleMS) {
+      highFrequencyMetrics.set(new HashMap<>());
+      highFrequencyTriggersTS.set(System.currentTimeMillis());
     }
   }
 }

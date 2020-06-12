@@ -43,6 +43,8 @@ import org.slf4j.Logger;
  */
 public class HighFrequencyDetector {
 
+  public static final int BURST_THRESHOLD = 5;
+
   /** Allow to drop high frequency metrics. */
   @Inject
   @Named("dropHighFrequencyMetric")
@@ -139,8 +141,13 @@ public class HighFrequencyDetector {
 
     int result = -1;
 
-    if (stats.getCount() > 5) {
-      // uses minimal time delta from all consecutive data points
+    /**
+     * In order to be marked as high frequency metric the number of points
+     * should be above the BURST_THRESHOLD.
+     * It ignores any small bursts of high frequency metrics.
+     */
+    if (stats.getCount() > BURST_THRESHOLD) {
+      // uses minimal delta time from all consecutive data points
       result = stats.getMin();
       log.info("stats: " + stats);
     }

@@ -24,8 +24,8 @@ package com.spotify.ffwd.opencensus;
 import com.google.inject.Inject;
 import com.spotify.ffwd.model.Batch;
 import com.spotify.ffwd.model.Metric;
-import com.spotify.ffwd.output.FakeBatchablePluginSinkBase;
 import com.spotify.ffwd.output.PluginSink;
+import com.spotify.ffwd.util.BatchMetricConverter;
 import eu.toolchain.async.AsyncFramework;
 import eu.toolchain.async.AsyncFuture;
 import io.opencensus.exporter.stats.stackdriver.StackdriverStatsConfiguration;
@@ -65,7 +65,7 @@ import org.slf4j.LoggerFactory;
  * https://www.javadoc.io/doc/io.opencensus/opencensus-api/latest/io/opencensus/resource/
 package-summary.html
  */
-public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements PluginSink  {
+public class OpenCensusPluginSink implements PluginSink  {
   private static final Logger log = LoggerFactory.getLogger(OpenCensusPluginSink.class);
   @Inject
   private AsyncFramework async;
@@ -87,7 +87,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
   public OpenCensusPluginSink(Optional<String> gcpProject, Optional<Integer> maxViews,
       Optional<String> outputMetricNamePattern) {
     this.gcpProject = gcpProject;
-    this.maxViews = maxViews.orElse(10000);
+    this.maxViews = maxViews.orElse(500);
     this.outputMetricNamePattern = outputMetricNamePattern.orElse("${key}_${what}");
   }
 
@@ -111,7 +111,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
         // from the start.
         final List<TagKey> columns = new ArrayList<TagKey>(metric.getTags().size());
         metric.getTags().keySet().forEach(tagName -> {
-            columns.add(TagKey.create(tagName));
+            columns.add(TagKey.create(sanitizeName(tagName)));
         });
         final View view =
             View.create(
@@ -125,7 +125,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
       }
       final TagContextBuilder builder = tagger.emptyBuilder();
       metric.getTags().forEach((k, v) -> {
-          builder.putPropagating(TagKey.create(k), TagValue.create(v));
+          builder.putPropagating(TagKey.create(sanitizeName(k)), TagValue.create(v));
       });
       final TagContext context = builder.build();
 
@@ -139,7 +139,7 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
   public void sendBatch(Batch batch) {
     // NB: Unfortunately batches and measureMaps are not the same.
     batch.getPoints().forEach(point -> {
-      sendMetric(convertBatchMetric(batch, point));
+      sendMetric(BatchMetricConverter.convertBatchMetric(batch, point));
     });
   }
 
@@ -183,7 +183,22 @@ public class OpenCensusPluginSink extends FakeBatchablePluginSinkBase implements
         return metric.getTags().get(key);
       }
     });
-    return sub.replace(outputMetricNamePattern);
+    return sanitizeName(sub.replace(outputMetricNamePattern));
+  }
+
+  private String sanitizeName(String name) {
+    // acording to https://cloud.google.com/monitoring/api/ref_v3/rest/v3/projects.metricDescriptors
+    // metric types and labels should only contain alphanumerics and underscores and shouldn't start
+    // with an underscore.
+    String sanitizedName = name.replaceAll("[^A-Za-z0-9_]", "_");
+    if (sanitizedName.startsWith("_")) {
+      if (sanitizedName.length() > 1) {
+        sanitizedName = sanitizedName.substring(1);
+      } else {
+        throw new RuntimeException("Invalid name '_'.");
+      }
+    }
+    return sanitizedName;
   }
 
 }

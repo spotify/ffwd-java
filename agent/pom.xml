@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>ffwd-agent</artifactId>
-  <version>0.5.7-SNAPSHOT</version>
+  <version>0.6.3-SNAPSHOT</version>
   <packaging>jar</packaging>
 
   <name>FastForward Agent</name>
@@ -10,7 +10,7 @@
   <parent>
     <groupId>com.spotify.ffwd</groupId>
     <artifactId>ffwd-parent</artifactId>
-    <version>0.5.7-SNAPSHOT</version>
+    <version>0.6.3-SNAPSHOT</version>
     <relativePath>..</relativePath>
   </parent>
 
@@ -61,6 +61,10 @@
     <dependency>
       <groupId>com.spotify.ffwd</groupId>
       <artifactId>ffwd-module-pubsub</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>com.spotify.ffwd</groupId>
+      <artifactId>ffwd-module-opencensus</artifactId>
     </dependency>
 
     <!-- logging -->

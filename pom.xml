@@ -3,7 +3,7 @@
 
   <groupId>com.spotify.ffwd</groupId>
   <artifactId>ffwd-parent</artifactId>
-  <version>0.5.7-SNAPSHOT</version>
+  <version>0.6.3-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>FastForward Parent</name>
@@ -14,7 +14,7 @@
   <parent>
     <groupId>com.spotify</groupId>
     <artifactId>foss-root</artifactId>
-    <version>6</version>
+    <version>10</version>
   </parent>
 
   <modules>
@@ -31,6 +31,7 @@
     <module>modules/signalfx</module>
     <module>modules/http</module>
     <module>modules/pubsub</module>
+    <module>modules/opencensus</module>
   </modules>
 
   <licenses>
@@ -60,7 +61,7 @@
     <skip.findbugs>true</skip.findbugs>
     <guice.version>4.2.2</guice.version>
     <tiny-async.version>1.11.0</tiny-async.version>
-    <log4j.version>2.11.1</log4j.version>
+    <log4j.version>2.13.3</log4j.version>
     <slf4j.version>1.7.25</slf4j.version>
     <jackson.version>2.9.9</jackson.version>
     <kotlin.version>1.3.31</kotlin.version>
@@ -250,6 +251,11 @@
         <version>${project.version}</version>
       </dependency>
       <dependency>
+        <groupId>com.spotify.ffwd</groupId>
+        <artifactId>ffwd-module-opencensus</artifactId>
+        <version>${project.version}</version>
+      </dependency>
+      <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
         <version>3.6.0</version>
@@ -433,7 +439,7 @@
         <artifactId>kotlin-maven-plugin</artifactId>
         <version>${kotlin.version}</version>
         <configuration>
-          <jvmTarget>1.8</jvmTarget>
+          <jvmTarget>11</jvmTarget>
         </configuration>
         <executions>
           <execution>

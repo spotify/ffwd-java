@@ -1,6 +1,6 @@
 /*-
  * -\-\-
- * FastForward API
+ * FastForward OpenCensus Module
  * --
  * Copyright (C) 2016 - 2018 Spotify AB
  * --
@@ -18,16 +18,18 @@
  * -/-/-
  */
 
-package com.spotify.ffwd.statistics;
+package com.spotify.ffwd.opencensus;
 
-public interface CoreStatistics {
-    public InputManagerStatistics newInputManager();
+import com.google.inject.Inject;
+import com.spotify.ffwd.module.FastForwardModule;
+import com.spotify.ffwd.module.PluginContext;
 
-    public OutputManagerStatistics newOutputManager();
+public class OpenCensusOutputModule implements FastForwardModule {
+    @Inject
+    private PluginContext context;
 
-    public OutputPluginStatistics newOutputPlugin(String id);
-
-    public BatchingStatistics newBatching(String id);
-
-    public HighFrequencyDetectorStatistics newHighFrequency();
+    @Override
+    public void setup() throws Exception {
+        context.registerOutput("opencensus", OpenCensusOutputPlugin.class);
+    }
 }

@@ -174,7 +174,7 @@ public class JsonObjectMapperDecoder extends MessageToMessageDecoder<ByteBuf> {
     private Map<String, String> decodeResources(JsonNode tree, String name) {
         final JsonNode n = tree.get(name);
 
-        if ( n == null ) {
+        if (n == null) {
             return EMPTY_RESOURCES;
         }
 

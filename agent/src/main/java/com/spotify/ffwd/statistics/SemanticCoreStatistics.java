@@ -259,17 +259,18 @@ public class SemanticCoreStatistics implements CoreStatistics {
             }
 
             @Override
-            public void reportHighFrequencyMetrics(int marked, String... tags){
+            public void reportHighFrequencyMetrics(int marked, String... tags) {
                 MetricId gaugeMetric = m.tagged("what", "high-freq-metrics").tagged(tags);
 
                 registerGauge(gaugeMetric);
 
-                highFreqMetricsMap.put(gaugeMetric, (long)marked);
+                highFreqMetricsMap.put(gaugeMetric, (long) marked);
             }
 
-            private synchronized void registerGauge(MetricId gauge){
-                if(highFreqMetricsMap.containsKey(gauge))
+            private synchronized void registerGauge(MetricId gauge) {
+                if (highFreqMetricsMap.containsKey(gauge)) {
                     return;
+                }
                 registry.register(gauge, new Gauge<Long>() {
                     @Override
                     public Long getValue() {

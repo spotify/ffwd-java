@@ -265,6 +265,22 @@ public class SemanticCoreStatistics implements CoreStatistics {
             public void reportHighFrequencyMetrics(int marked) {
                 highFreqMetrics.set(marked);
             }
+
+            public void reportHighFrequencyMetrics(int marked, String... tags){
+                /*
+                TODO finish up saving current num per metric to
+                    AtomicReference<Map<MetricId, Long>> or
+                    ConcurrentHashMap<MetricId, Long>()
+                 */
+
+                registry.register(m.tagged("what", "high-freq-metrics").tagged(tags), new Gauge<Integer>() {
+                    @Override
+                    public Integer getValue() {
+                        final int queueLength = marked;
+                        return queueLength;
+                    }
+                });
+            }
         };
     }
 }

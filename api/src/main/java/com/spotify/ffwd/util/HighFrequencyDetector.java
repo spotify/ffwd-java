@@ -100,7 +100,7 @@ public class HighFrequencyDetector {
   public List<Metric> detect(final List<Metric> metrics) {
     List<Metric> newList = new ArrayList<>();
 
-    // Groups metrics by metric hash code and finds times deltas of ordered data points.
+    // Groups metrics by metric identity and finds times deltas of ordered data points.
     // {metric1 -> -1, metric2 -> 10}
     Map<Metric, Integer> groupedMetrics =
         metrics.stream()

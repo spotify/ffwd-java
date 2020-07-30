@@ -267,7 +267,7 @@ public class SemanticCoreStatistics implements CoreStatistics {
                 highFreqMetricsMap.put(gaugeMetric, (long) marked);
             }
 
-            private synchronized void registerGauge(MetricId gauge) {
+            private void registerGauge(MetricId gauge) {
                 if (highFreqMetricsMap.containsKey(gauge)) {
                     return;
                 }

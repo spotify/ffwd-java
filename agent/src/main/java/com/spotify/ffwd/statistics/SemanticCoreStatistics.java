@@ -271,12 +271,16 @@ public class SemanticCoreStatistics implements CoreStatistics {
                 if (highFreqMetricsMap.containsKey(gauge)) {
                     return;
                 }
-                registry.register(gauge, new Gauge<Long>() {
-                    @Override
-                    public Long getValue() {
-                        return highFreqMetricsMap.get(gauge);
-                    }
-                });
+                try {
+                    registry.register(gauge, new Gauge<Long>() {
+                        @Override
+                        public Long getValue() {
+                            return highFreqMetricsMap.get(gauge);
+                        }
+                    });
+                } catch (IllegalArgumentException e) {
+                    // Do nothing as Gauge already registered
+                }
             }
         };
     }

@@ -166,17 +166,13 @@ public class HighFrequencyDetectorTest {
         }
 
         finalList.addAll(shortSwapDetector.detect(list));
-        sleep(300);
+        try {
+          Thread.sleep(300);
+        } catch (InterruptedException e) {
+          // NOTHING TO SEE HERE! MOVE ALONG!
+        }
       }
     }
     assertEquals(280, finalList.size());
-  }
-
-  private static void sleep(final long millis) {
-    try {
-      Thread.sleep(millis);
-    } catch (InterruptedException e) {
-      // NOTHING TO SEE HERE! MOVE ALONG!
-    }
   }
 }

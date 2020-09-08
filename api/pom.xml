@@ -28,6 +28,12 @@
       <groupId>com.google.inject.extensions</groupId>
       <artifactId>guice-multibindings</artifactId>
     </dependency>
+    <!-- com.spotify.metrics.ffwd dependencies -->
+    <dependency>
+      <groupId>com.spotify.ffwd</groupId>
+      <artifactId>ffwd-client</artifactId>
+      <version>0.2.2</version>
+    </dependency>
 
     <!-- annotations are required to setup module configurations -->
     <dependency>

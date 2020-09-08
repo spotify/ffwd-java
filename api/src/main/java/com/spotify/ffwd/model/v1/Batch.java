@@ -18,7 +18,7 @@
  * -/-/-
  */
 
-package com.spotify.ffwd.model;
+package com.spotify.ffwd.model.v1;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -57,7 +57,7 @@ public class Batch {
         private final String key;
         private final Map<String, String> tags;
         private final Map<String, String> resource;
-        private final double value;
+        private final Value value;
         private final long timestamp;
 
         /**
@@ -68,7 +68,7 @@ public class Batch {
             @JsonProperty("key") final String key,
             @JsonProperty("tags") final Optional<Map<String, String>> tags,
             @JsonProperty("resource") final Optional<Map<String, String>> resource,
-            @JsonProperty("value") final double value,
+            @JsonProperty("value") final Value value,
             @JsonProperty("timestamp") final long timestamp
         ) {
             return new Point(key, tags.orElseGet(ImmutableMap::of),

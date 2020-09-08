@@ -30,8 +30,8 @@ output:
         batchSizeLimit: 10000  # Default: 10000
         maxPendingFlushes: 10 # Default: 10
 
-      project: google-test-project
-      topic: test-topic
+      project: test-project-distribution #google-test-project
+      topic: distribution-test #test-topic
       requestBytesThreshold: 25000 # Default: 5000
       messageCountBatchSize: 10 # Default: 1000
       publishDelayThresholdMs: 200 # Default: 200

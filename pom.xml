@@ -3,7 +3,7 @@
 
   <groupId>com.spotify.ffwd</groupId>
   <artifactId>ffwd-parent</artifactId>
-  <version>0.6.7-SNAPSHOT</version>
+  <version>0.6.8-SNAPSHOT</version>
   <packaging>pom</packaging>
 
   <name>FastForward Parent</name>
@@ -409,8 +409,8 @@
       </dependency>
       <dependency>
         <groupId>com.github.stefanbirkner</groupId>
-        <artifactId>system-rules</artifactId>
-        <version>1.19.0</version>
+        <artifactId>system-lambda</artifactId>
+        <version>1.1.0</version>
         <scope>test</scope>
       </dependency>
 

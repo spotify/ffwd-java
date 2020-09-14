@@ -18,12 +18,13 @@
  * -/-/-
  */
 
-package com.spotify.ffwd.model;
+package com.spotify.ffwd.model.v2;
 
 import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
+import com.spotify.ffwd.model.Metrics;
 import java.util.Date;
 import java.util.Map;
 import java.util.Set;
@@ -31,21 +32,18 @@ import java.util.TreeMap;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * TODO: rename to 'Point' to follow along with internal guidelines.
- */
+
 @Data
-@EqualsAndHashCode(of = {"key",  "tags"})
+@EqualsAndHashCode(of = {"key", "tags"})
 public class Metric implements Metrics {
     static final HashFunction HASH_FUNCTION = Hashing.murmur3_128();
 
     private final String key;
-    private final double value;
+    private final Value value;
     private final Date time;
-    private final Set<String> riemannTags;
     private final Map<String, String> tags;
     private final Map<String, String> resource;
-    private final String proc;
+
 
     /**
      * Convert into a batch point, lose information that is not relevant for batches.

@@ -23,6 +23,7 @@ package com.spotify.ffwd.cache;
 
 import com.google.common.cache.Cache;
 import com.spotify.ffwd.model.Metric;
+import com.spotify.ffwd.model.Metrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,6 +43,15 @@ public class ExpiringCache implements WriteCache {
 
   @Override
   public boolean checkCacheOrSet(final Metric metric) {
+      return check(metric);
+  }
+
+  @Override
+  public boolean checkCacheOrSet(final com.spotify.ffwd.model.v2.Metric metric) {
+    return check(metric);
+  }
+
+  private boolean check(final Metrics metric){
     if (writeCache.getIfPresent(metric.generateHash()) != null) {
       log.trace("Metric in cache: {}", metric);
       return true;
@@ -49,5 +59,8 @@ public class ExpiringCache implements WriteCache {
     writeCache.put(metric.generateHash(), true);
     return false;
   }
+
+
+
 
 }

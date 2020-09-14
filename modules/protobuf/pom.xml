@@ -25,9 +25,16 @@
       <artifactId>ffwd-api</artifactId>
     </dependency>
 
+    <!--
     <dependency>
       <groupId>eu.toolchain.ffwd</groupId>
       <artifactId>ffwd-client</artifactId>
     </dependency>
+    -->
+  <dependency>
+    <groupId>com.spotify.ffwd</groupId>
+    <artifactId>ffwd-client</artifactId>
+    <version>0.2.2</version>
+  </dependency>
   </dependencies>
 </project>

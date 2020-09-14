@@ -258,7 +258,7 @@
       <dependency>
         <groupId>com.google.protobuf</groupId>
         <artifactId>protobuf-java</artifactId>
-        <version>3.6.0</version>
+        <version>3.11.1</version>
       </dependency>
 
       <dependency>
@@ -355,6 +355,7 @@
         <artifactId>tiny-async-core</artifactId>
         <version>${tiny-async.version}</version>
       </dependency>
+
 
       <dependency>
         <groupId>eu.toolchain.ffwd</groupId>

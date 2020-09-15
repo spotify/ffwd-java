@@ -24,7 +24,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.spotify.ffwd.cache.WriteCache;
 import com.spotify.ffwd.model.Metric;
 import java.util.Collection;
-import java.util.List;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 public interface Serializer {

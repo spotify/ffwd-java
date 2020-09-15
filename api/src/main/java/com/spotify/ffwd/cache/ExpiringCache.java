@@ -34,33 +34,31 @@ import org.slf4j.LoggerFactory;
  * a new index being created.
  */
 public class ExpiringCache implements WriteCache {
-  private static final Logger log = LoggerFactory.getLogger(ExpiringCache.class);
-  private final Cache<String, Boolean> writeCache;
+    private static final Logger log = LoggerFactory.getLogger(ExpiringCache.class);
+    private final Cache<String, Boolean> writeCache;
 
-  public ExpiringCache(final Cache<String, Boolean> writeCache) {
-    this.writeCache = writeCache;
-  }
+    public ExpiringCache(final Cache<String, Boolean> writeCache) {
+        this.writeCache = writeCache;
+    }
 
-  @Override
-  public boolean checkCacheOrSet(final Metric metric) {
-      return check(metric);
-  }
 
-  @Override
-  public boolean checkCacheOrSet(final com.spotify.ffwd.model.v2.Metric metric) {
+    @Override
+    public boolean checkCacheOrSet(final Metric metric) {
     return check(metric);
   }
 
-  private boolean check(final Metrics metric){
-    if (writeCache.getIfPresent(metric.generateHash()) != null) {
-      log.trace("Metric in cache: {}", metric);
-      return true;
+    @Override
+    public boolean checkCacheOrSet(final com.spotify.ffwd.model.v2.Metric metric) {
+        return check(metric);
     }
-    writeCache.put(metric.generateHash(), true);
-    return false;
+
+    private boolean check(final Metrics metric) {
+        if (writeCache.getIfPresent(metric.generateHash()) != null) {
+            log.trace("Metric in cache: {}", metric);
+            return true;
+        }
+        writeCache.put(metric.generateHash(), true);
+        return false;
   }
-
-
-
 
 }

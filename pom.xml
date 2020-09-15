@@ -356,11 +356,10 @@
         <version>${tiny-async.version}</version>
       </dependency>
 
-
       <dependency>
-        <groupId>eu.toolchain.ffwd</groupId>
+        <groupId>com.spotify.ffwd</groupId>
         <artifactId>ffwd-client</artifactId>
-        <version>0.0.3</version>
+        <version>0.2.2</version>
       </dependency>
 
       <dependency>
@@ -368,7 +367,6 @@
         <artifactId>stream</artifactId>
         <version>2.9.8</version>
       </dependency>
-
 
       <dependency>
         <groupId>org.xerial.snappy</groupId>
@@ -517,7 +515,7 @@
           <effort>Max</effort>
           <threshold>Default</threshold>
           <xmlOutput>true</xmlOutput>
-          <skip>${skip.findbugs}</skip>
+         <skip>${skip.findbugs}</skip>
         </configuration>
         <executions>
           <execution>

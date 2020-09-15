@@ -88,10 +88,10 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
 
         switch (version) {
             case 0:  //TODO update this
-                frame = decodeFrame(in,FastForward.Version.V0);
+                frame = decodeFrame(in, FastForward.Version.V0);
                 break;
             case 1 :
-                frame = decodeFrame(in,FastForward.Version.V1);
+                frame = decodeFrame(in, FastForward.Version.V1);
                 break;
             default:
                 throw new IllegalArgumentException("Unsupported protocol version: " + version);
@@ -166,7 +166,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     private com.spotify.ffwd.model.v2.Value extractPointValue(com.spotify.ffwd.protocol1.Protocol1.Metric metric) {
-        if (!metric.hasValue()){
+        if (!metric.hasValue()) {
             return  Value.DoubleValue.create(Double.NaN);  //TODO determine why Double.NaN is used as default
         }
 

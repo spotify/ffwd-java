@@ -27,7 +27,6 @@ import com.google.common.hash.Hashing;
 import com.spotify.ffwd.model.Metrics;
 import java.util.Date;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 import lombok.Data;
 import lombok.EqualsAndHashCode;

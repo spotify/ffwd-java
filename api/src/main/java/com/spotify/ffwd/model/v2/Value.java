@@ -56,13 +56,14 @@ public interface Value<T> {
 
         @Override
         @JsonIgnore
-        public ByteString getValue(){
+        public ByteString getValue() {
             return value;
         }
 
         @JsonCreator
-        public static com.spotify.ffwd.model.v2.Value.DistributionValue create(final ByteString value){
-            return  new com.spotify.ffwd.model.v2.Value.DistributionValue(value);
+        public static com.spotify.ffwd.model.v2.Value.DistributionValue create(
+                final ByteString value) {
+            return new com.spotify.ffwd.model.v2.Value.DistributionValue(value);
         }
     }
 

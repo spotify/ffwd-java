@@ -60,7 +60,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
         }
     }
 
-    private void decodeOne( final ByteBuf in, final List<Object> out)
+    private void decodeOne(final ByteBuf in, final List<Object> out)
         throws Exception {
         final int version = (int) in.getUnsignedInt(0);
         final long totalLength = in.getUnsignedInt(4);
@@ -113,7 +113,8 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
                 return decodeMetric0(Protocol0.Message.parseFrom(inputStream));
             }
             if (FastForward.Version.V1.equals(version)) {
-                return decodeMetric1(com.spotify.ffwd.protocol1.Protocol1.Message.parseFrom(inputStream));
+                return decodeMetric1(com.spotify.ffwd.protocol1.Protocol1
+                        .Message.parseFrom(inputStream));
             }
         } catch (final InvalidProtocolBufferException e) {
             throw new Exception("Invalid protobuf message", e);
@@ -126,17 +127,17 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
             return null;
         }
         Protocol0.Metric metric = message.getMetric();
-        final String key = metric.hasKey() ? metric.getKey():null;
-        final double value = metric.hasValue() ? metric.getValue():Double.NaN;
-        final Date time = metric.hasTime() ? new Date(metric.getTime()):null;
-        final String host = metric.hasHost() ? metric.getHost():null;
+        final String key = metric.hasKey() ? metric.getKey() : null;
+        final double value = metric.hasValue() ? metric.getValue() : Double.NaN;
+        final Date time = metric.hasTime() ? new Date(metric.getTime()) : null;
+        final String host = metric.hasHost() ? metric.getHost() : null;
         final Set<String> riemannTags = new HashSet<>(metric.getTagsList());
         final Map<String, String> tags = convertAttributes0(metric.getAttributesList());
         // TODO: support resource identifiers.
         final Map<String, String> resource = ImmutableMap.of();
-        final String proc = metric.hasProc() ? metric.getProc():null;
+        final String proc = metric.hasProc() ? metric.getProc() : null;
 
-        if (host!=null) {
+        if (host != null) {
             tags.put("host", host);
         }
 
@@ -165,9 +166,11 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
         return new com.spotify.ffwd.model.v2.Metric(key, value, time, tags, resource);
     }
 
-    private com.spotify.ffwd.model.v2.Value extractPointValue(com.spotify.ffwd.protocol1.Protocol1.Metric metric) {
+    private com.spotify.ffwd.model.v2.Value extractPointValue(
+            com.spotify.ffwd.protocol1.Protocol1.Metric metric) {
         if (!metric.hasValue()) {
-            return  Value.DoubleValue.create(Double.NaN);  //TODO determine why Double.NaN is used as default
+            return  Value.DoubleValue.create(Double.NaN);
+            //TODO determine why Double.NaN is used as default
         }
 
         com.spotify.ffwd.protocol1.Protocol1.Value value = metric.getValue();
@@ -178,7 +181,8 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
         return Value.DistributionValue.create(value.getDistributionValue());
     }
 
-    private Map<String, String> convertAttributes1(List<com.spotify.ffwd.protocol1.Protocol1.Attribute> attributesList) {
+    private Map<String, String> convertAttributes1(
+            List<com.spotify.ffwd.protocol1.Protocol1.Attribute> attributesList) {
         final Map<String, String> attributes = new HashMap<>();
 
         for (final com.spotify.ffwd.protocol1.Protocol1.Attribute a : attributesList) {

@@ -21,8 +21,8 @@ message Metric {
     // resource "tags" associated to metric.
     map<string, string> resource = 5;
 
-    // Point value
-     Point point =  10;
+    // Distribution type value
+     Value distribution_type_value = 6;
 }
 
 message Message {
@@ -33,10 +33,6 @@ message Batch {
     repeated Metric metric = 1;
 }
 
-message Point {
-    Value value = 1;
-    int64 time  =  2;
-}
 
 message Value {
     oneof value {

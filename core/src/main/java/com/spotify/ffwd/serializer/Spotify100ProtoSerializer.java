@@ -64,20 +64,21 @@ public class Spotify100ProtoSerializer implements Serializer {
     }
 
     @Override
-    public byte[] serializeMetrics(Collection<com.spotify.ffwd.model.v2.Metric> metrics,
+    public byte[] serializeMetrics(final Collection<com.spotify.ffwd.model.v2.Metric> metrics,
                                  WriteCache writeCache) throws Exception {
         final Spotify100.Batch.Builder batch = Spotify100.Batch.newBuilder();
 
         for (com.spotify.ffwd.model.v2.Metric metric : metrics) {
             if (!writeCache.checkCacheOrSet(metric)) {
-                batch.addMetric(serializeMetric(metric));
+                batch.addMetric(convertToSpotify100Metric(metric));
             }
         }
         return Snappy.compress(batch.build().toByteArray());
     }
 
-    private Spotify100.Metric serializeMetric(final com.spotify.ffwd.model.v2.Metric metric) {
-        Spotify100.Point.Builder pointBuilder = Spotify100.Point.newBuilder();
+
+    private Spotify100.Metric convertToSpotify100Metric(
+            final com.spotify.ffwd.model.v2.Metric metric) {
 
         Spotify100.Value.Builder valueBuilder = Spotify100.Value.newBuilder();
 
@@ -93,14 +94,11 @@ public class Spotify100ProtoSerializer implements Serializer {
             throw new UnknownFormatConversionException("Unknown value type [ " + value + " ]");
         }
 
-        Spotify100.Point point = pointBuilder
-            .setValue(valueBuilder.build())
-            .setTime(metric.getTime().getTime())
-            .build();
 
         Spotify100.Metric.Builder builder = Spotify100.Metric.newBuilder();
         builder.setKey(metric.getKey())
-            .setPoint(point)
+            .setDistributionTypeValue(valueBuilder.build())
+            .setTime(metric.getTime())
             .putAllTags(metric.getTags())
             .putAllResource(metric.getResource())
             .build();

@@ -117,7 +117,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
                         .Message.parseFrom(inputStream));
             }
         } catch (final InvalidProtocolBufferException e) {
-            throw new Exception("Invalid protobuf message", e);
+            throw new Exception("Invalid protobuf message version = " + version.getVersion(), e);
         }
         return null;
     }
@@ -151,7 +151,6 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
         com.spotify.ffwd.protocol1.Protocol1.Metric metric = message.getMetric();
         final String key =  metric.getKey();
         final com.spotify.ffwd.model.v2.Value value = extractPointValue(metric);
-        final Date time = new Date(metric.getTime());
         final String host =  metric.getHost();
 
         final Map<String, String> tags = convertAttributes1(metric.getAttributesList());
@@ -163,7 +162,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
             tags.put("host", host);
         }
 
-        return new com.spotify.ffwd.model.v2.Metric(key, value, time, tags, resource);
+        return new com.spotify.ffwd.model.v2.Metric(key, value, metric.getTime(), tags, resource);
     }
 
     private com.spotify.ffwd.model.v2.Value extractPointValue(

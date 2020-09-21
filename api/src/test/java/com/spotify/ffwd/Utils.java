@@ -33,12 +33,12 @@ public class Utils {
       ImmutableMap.of("what", "test"), ImmutableMap.of(), null);
   }
   public static com.spotify.ffwd.model.v2.Metric makeDistributionMetric(double val) {
-    return new com.spotify.ffwd.model.v2.Metric("key1", create(val), new Date(),
+    return new com.spotify.ffwd.model.v2.Metric("key1", create(val), System.currentTimeMillis(),
             ImmutableMap.of("what", "test"), ImmutableMap.of());
   }
 
   public static com.spotify.ffwd.model.v2.Metric makeDistributionMetric(ByteString val) {
-    return new com.spotify.ffwd.model.v2.Metric("key1", create(val), new Date(),
+    return new com.spotify.ffwd.model.v2.Metric("key1", create(val), System.currentTimeMillis(),
             ImmutableMap.of("what", "test"), ImmutableMap.of());
   }
 
@@ -50,6 +50,5 @@ public class Utils {
   private static Value create(final double doubleVal){
      return Value.DoubleValue.create(doubleVal);
   }
-
 
 }

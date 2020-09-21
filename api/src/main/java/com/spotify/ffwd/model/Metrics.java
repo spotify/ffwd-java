@@ -19,6 +19,12 @@ package com.spotify.ffwd.model;
  * limitations under the License.
  * -/-/-
  */
+
+/**
+ * This is a marker interface. It is used when possible
+ * to avoid duplicate code when abstraction involves both
+ * both old and new metrics.
+ */
 public interface Metrics {
     String generateHash();
 }

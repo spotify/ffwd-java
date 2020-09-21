@@ -2,7 +2,7 @@
  * -\-\-
  * FastForward API
  * --
- * Copyright (C) 2016 - 2018 Spotify AB
+ * Copyright (C) 2016 - 2020 Spotify AB
  * --
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hasher;
 import com.google.common.hash.Hashing;
 import com.spotify.ffwd.model.Metrics;
-import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 import lombok.Data;
@@ -39,7 +38,7 @@ public class Metric implements Metrics {
 
     private final String key;
     private final Value value;
-    private final Date time;
+    private final long time;
     private final Map<String, String> tags;
     private final Map<String, String> resource;
 
@@ -50,7 +49,7 @@ public class Metric implements Metrics {
      * @return a batch point
      */
     public Batch.Point toBatchPoint() {
-        return new Batch.Point(key, tags, resource, value, time.getTime());
+        return new Batch.Point(key, tags, resource, value, time);
     }
 
     @Override

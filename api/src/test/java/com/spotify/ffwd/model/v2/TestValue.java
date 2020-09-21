@@ -24,7 +24,6 @@ import static junit.framework.TestCase.assertEquals;
 
 
 import com.google.protobuf.ByteString;
-import java.nio.charset.StandardCharsets;
 import org.junit.Test;
 
 
@@ -34,7 +33,7 @@ public class TestValue {
 
     private final static double DOUBLE_VAL = 0.022;
     private final static ByteString BYTE_STRING =
-            ByteString.copyFrom("0s0s0s0s0s0s0s0s".getBytes(StandardCharsets.UTF_8));
+            ByteString.copyFromUtf8("0s0s0s0s0s0s0s0s");
     @Test
     public void testCreateDoubleValue(){
         Value.DoubleValue val = Value.DoubleValue.create(DOUBLE_VAL);
@@ -42,8 +41,8 @@ public class TestValue {
     }
 
     @Test
-   public void testCreateDistributionValue(){
+   public void testCreateDistributionValue() {
         Value.DistributionValue val = Value.DistributionValue.create(BYTE_STRING);
-        assertEquals(BYTE_STRING,val.getValue());
+        assertEquals(BYTE_STRING, val.getValue());
     }
 }

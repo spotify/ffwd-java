@@ -31,9 +31,7 @@ import java.util.TreeMap;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
-/**
- * TODO: rename to 'Point' to follow along with internal guidelines.
- */
+
 @Data
 @EqualsAndHashCode(of = {"key",  "tags"})
 public class Metric implements Metrics {

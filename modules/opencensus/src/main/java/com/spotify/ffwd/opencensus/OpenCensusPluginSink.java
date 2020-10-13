@@ -92,7 +92,9 @@ public class OpenCensusPluginSink implements PluginSink  {
   }
 
   public void sendMetric(Metric metric) {
-    if (metric.hasDistribution()) return;
+    if (metric.hasDistribution()) {
+      return;
+    }
     try {
       String metricName = getOutputMetricName(metric);
       MeasureDouble measure = measures.get(metricName);
@@ -130,7 +132,8 @@ public class OpenCensusPluginSink implements PluginSink  {
       });
       final TagContext context = builder.build();
 
-      statsRecorder.newMeasureMap().put(measure, (Double) metric.getValue().getValue()).record(context);
+      statsRecorder.newMeasureMap().put(measure,
+              (Double) metric.getValue().getValue()).record(context);
     } catch (Exception ex) {
       log.error("Couldn't send metric %s", ex);
       throw ex;

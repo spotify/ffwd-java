@@ -83,5 +83,4 @@ public  abstract class Value {
             return new com.spotify.ffwd.model.v2.Value.DistributionValue(value);
         }
     }
-
 }

@@ -120,7 +120,8 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     /**
-     * Convert {@link com.spotify.ffwd.protocol0.Protocol0.Metric} into {@link com.spotify.ffwd.model.v2.Metric}
+     * Convert {@link com.spotify.ffwd.protocol0.Protocol0.Metric}
+     * into {@link com.spotify.ffwd.model.v2.Metric}
      * The object is then passed to the inputChannel.
      *
      * @param message, Metric wrapper
@@ -146,7 +147,8 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
     }
 
     /**
-     * Convert {@link com.spotify.ffwd.protocol1.Protocol1.Metric} into {@link com.spotify.ffwd.model.v2.Metric}.
+     * Convert {@link com.spotify.ffwd.protocol1.Protocol1.Metric}
+     * into {@link com.spotify.ffwd.model.v2.Metric}.
      * The object is then passed to the inputChannel.
      *
      * @param message, Metric wrapper

@@ -82,5 +82,4 @@ public class Metric implements Metrics {
 
         return hasher.hash().toString();
     }
-
 }

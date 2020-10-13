@@ -47,7 +47,7 @@ public class TestSpotify100ProtoSerializer {
   private static NoopCache writeCache = new NoopCache();
 
   //Test Data
-  private String key = "";
+  private String key = "KEY";
   private Value distributionDoubleValue = Value.DoubleValue.create(0.02);
   private Value distributionBytStringValue = Value.DistributionValue.create(ByteString.copyFromUtf8("ABCDEFG_1234"));
   private long time = 1542812184;
@@ -95,7 +95,6 @@ public class TestSpotify100ProtoSerializer {
 
   @Test
   public void testSerializedMetricWithDoubleValue() throws Exception {
-      String key ="testV2";
       Map<String,String> tags =  ImmutableMap.of("a", "b");
       Map<String,String> resource = ImmutableMap.of("res1","res2");
       Value value = Value.DoubleValue.create(0.02);
@@ -122,7 +121,6 @@ public class TestSpotify100ProtoSerializer {
   }
   @Test
   public void testSerializedMetricWithDistributionValue() throws Exception {
-    String key ="testV2";
     Value value = Value.DistributionValue.create((ByteString.copyFromUtf8("ABCDEFG")));
 
     Metric  metric1 = create(key,value,time,tags,resource);

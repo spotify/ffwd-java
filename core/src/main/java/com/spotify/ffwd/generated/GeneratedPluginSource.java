@@ -88,7 +88,7 @@ public class GeneratedPluginSource implements PluginSource {
 
         for (int i = 0; i < count; i++) {
             final String key = "generated";
-            final Value value = Value.DoubleValue.create(0.42*i);
+            final Value value = Value.DoubleValue.create(0.42 * i);
             final String host = generateHost(i);
             final Map<String, String> tags = ImmutableMap.of(
                     "what", "metric-" + i,

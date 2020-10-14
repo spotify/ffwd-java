@@ -86,7 +86,7 @@ public class CoreOutputManager implements OutputManager {
 
     @Inject
     @Named("riemannTags")
-    private Set<String> riemannTags;
+    private Set<String> riemannTags;  //TODO IS THIS NEEDED ??
 
     @Inject
     @Named("skipTagsForKeys")

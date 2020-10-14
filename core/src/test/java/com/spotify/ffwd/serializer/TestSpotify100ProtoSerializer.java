@@ -107,7 +107,7 @@ public class TestSpotify100ProtoSerializer {
      Spotify100.Batch spotify100BatchOut = deserialize(bytes);
 
      assertThat( value.getValue(), is(spotify100BatchOut.getMetricList()
-          .get(0).getDistributionTypeValue().getDoubleValue()));
+          .get(0).getValue().getDoubleValue()));
 
      assertThat( key, is(spotify100BatchOut.getMetricList()
             .get(0).getKey()));
@@ -130,7 +130,7 @@ public class TestSpotify100ProtoSerializer {
     Spotify100.Batch spotify100BatchOut = deserialize(bytes);
 
     assertThat( value.getValue(), is(spotify100BatchOut.getMetricList()
-            .get(0).getDistributionTypeValue().getDistributionValue()));
+            .get(0).getValue().getDistributionValue()));
 
     assertThat( key, is(spotify100BatchOut.getMetricList()
             .get(0).getKey()));

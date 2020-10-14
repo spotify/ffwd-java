@@ -77,7 +77,7 @@ public class Spotify100ProtoSerializer implements Serializer {
 
         Spotify100.Metric.Builder builder = Spotify100.Metric.newBuilder();
         builder.setKey(metric.getKey())
-            .setDistributionTypeValue(valueBuilder.build())
+            .setValue(valueBuilder.build())
             .setTime(metric.getTime())
             .putAllTags(metric.getTags())
             .putAllResource(metric.getResource())

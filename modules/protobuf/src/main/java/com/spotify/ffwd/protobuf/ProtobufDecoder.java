@@ -24,6 +24,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.spotify.ffwd.FastForward;
+import com.spotify.ffwd.model.v2.Metric;
 import com.spotify.ffwd.model.v2.Value;
 import com.spotify.ffwd.protocol0.Protocol0;
 import com.spotify.ffwd.protocol1.Protocol1;
@@ -143,7 +144,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
             tags.put("host", host);
         }
         //TODO check how time set to default value is handled
-        return new com.spotify.ffwd.model.v2.Metric(key, value, metric.getTime(), tags, resource);
+        return new Metric(key, value, metric.getTime(), tags, resource);
     }
 
     /**
@@ -172,7 +173,7 @@ public class ProtobufDecoder extends MessageToMessageDecoder<ByteBuf> {
             tags.put("host", host);
         }
 
-        return new com.spotify.ffwd.model.v2.Metric(key, value, metric.getTime(), tags, resource);
+        return new Metric(key, value, metric.getTime(), tags, resource);
     }
 
     private com.spotify.ffwd.model.v2.Value extractPointValue(

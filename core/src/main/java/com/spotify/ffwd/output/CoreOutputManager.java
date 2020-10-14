@@ -60,8 +60,8 @@ public class CoreOutputManager implements OutputManager {
     private static final String HOST = "host";
     private static final Logger log = LoggerFactory.getLogger(CoreOutputManager.class);
     private static final String[] KEYS_NEVER_TO_DROP = {"ffwd-java", "ffwd-java.ffwd-java"};
-    private static final int HYPER_LOG_LOG_PLUS_PRECISION_NORMAL = 14;
-    private static final int HYPER_LOG_LOG_PLUS_PRECISION_SPARSE = 5;
+    private static final int HYPER_LOG_LOG_LOG2M = 14;
+    private static final int HYPER_LOG_LOG_REG_WIDTH = 5;
 
     private final TokenBucket rateLimiter;
     private final Long cardinalityLimit;
@@ -164,8 +164,8 @@ public class CoreOutputManager implements OutputManager {
         }
 
         hyperLog = new AtomicReference<>(new HLL(
-                HYPER_LOG_LOG_PLUS_PRECISION_NORMAL,
-                HYPER_LOG_LOG_PLUS_PRECISION_SPARSE,
+                HYPER_LOG_LOG_LOG2M,
+                HYPER_LOG_LOG_REG_WIDTH,
                 -1, false, HLLType.FULL));
         hyperLogSwapTS =  new AtomicLong(System.currentTimeMillis());
         hyperLogSwapLock = new AtomicBoolean(false);
@@ -283,8 +283,8 @@ public class CoreOutputManager implements OutputManager {
         if (System.currentTimeMillis() - hyperLogSwapTS.get() > hyperLogLogPlusSwapPeriodMS
             && hyperLogSwapLock.compareAndExchange(false, true)) {
             hyperLog.set(new HLL(
-                    HYPER_LOG_LOG_PLUS_PRECISION_NORMAL,
-                    HYPER_LOG_LOG_PLUS_PRECISION_SPARSE,
+                    HYPER_LOG_LOG_LOG2M,
+                    HYPER_LOG_LOG_REG_WIDTH,
                     -1, false, HLLType.FULL));
             hyperLogSwapTS.set(System.currentTimeMillis());
             hyperLogSwapLock.set(false);

@@ -291,14 +291,14 @@ public class OutputManagerTest {
                     System.currentTimeMillis(), Map.of("key"+i,"value"+i), ImmutableMap.of()));
         }
 
-        // dropped number 20 as it is above cardinality limit
-        verify(sink, times(sendNum-1)).sendMetric(captor.capture());
+        // sent 18 as cardinality limit is 19
+        verify(sink, times(sendNum-2)).sendMetric(captor.capture());
 
         // Next metric shouldn't be dropped as it uses special key
         Metric mKey = new Metric("ffwd-java", Value.DoubleValue.create(42.0), System.currentTimeMillis(), ImmutableMap.of(), ImmutableMap.of());
         outputManager.sendMetric(mKey);
 
-        verify(sink, times(sendNum)).sendMetric(captor.capture());
+        verify(sink, times(sendNum-1)).sendMetric(captor.capture());
     }
 
     @Test
@@ -330,7 +330,7 @@ public class OutputManagerTest {
                     System.currentTimeMillis(), Map.of("key"+i,"value"+i), ImmutableMap.of()));
         }
 
-        verify(sink, times(39)).sendMetric(captor.capture());
+        verify(sink, times(38)).sendMetric(captor.capture());
     }
 
 
@@ -356,7 +356,7 @@ public class OutputManagerTest {
 
         outputManager.sendBatch(batch);
 
-        verify(sink, times(1)).sendBatch(captorBatch.capture());
+        verify(sink, times(0)).sendBatch(captorBatch.capture());
 
         // Next metric shouldn't be dropped as it uses special key
         Metric mKey = new Metric("ffwd-java", Value.DoubleValue.create(42.0),
@@ -387,7 +387,7 @@ public class OutputManagerTest {
 
         final Batch batch = new Batch(Maps.newHashMap(), Maps.newHashMap(), points);
         outputManager.sendBatch(batch);
-        verify(sink, times(1)).sendBatch(captorBatch.capture());
+        verify(sink, times(0)).sendBatch(captorBatch.capture());
 
         // Next metric shouldn't be dropped as it uses special key
         Metric mKey = new Metric("ffwd-java", Value.DoubleValue.create(42.0),

@@ -12,6 +12,9 @@ message Metric {
     // time in ms when metric was generated.
     int64 time = 2;
 
+    // value of metric.
+    double value = 3;
+
     // tags associated to a metric, used to be referred to as attributes.
     map<string, string> tags = 4;
 
@@ -19,7 +22,7 @@ message Metric {
     map<string, string> resource = 5;
 
     // Distribution type value
-     Value value = 6;
+     Value distribution_type_value = 6;
 }
 
 // Collection of metric. This is used to serialize metrics

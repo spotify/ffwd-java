@@ -59,7 +59,7 @@ public class OutputManagerModule {
   private static final Integer DEFAULT_MIN_NUMBER_OF_TRIGGERS = 5;
   private static final Long DEFAULT_HIGH_FREQUENCY_DATA_RECYCLE_MS = 3_600_000L;
   // Limit amount of input metrics to serialize
-  private static final Integer DEFAULT_MAX_INPUT_METRICS = 500_000;
+  public static final Integer DEFAULT_MAX_INPUT_METRICS = 500_000;
 
   private final List<OutputPlugin> plugins;
   private final Filter filter;
@@ -71,7 +71,7 @@ public class OutputManagerModule {
   private final int minNumberOfTriggers;
   private final long highFrequencyDataRecycleMS;
   @Nullable private final String dynamicTagsFile;
-  private final int maxInputMetrics;
+  @Nullable private final int maxInputMetrics;
 
   @JsonCreator
   public OutputManagerModule(
@@ -257,9 +257,7 @@ public class OutputManagerModule {
       @Provides
       @Singleton
       @Named("maxInputMetrics")
-      public int maxInputMetrics() {
-        return maxInputMetrics;
-      }
+      public int maxInputMetrics() { return maxInputMetrics; }
 
       @Override
       protected void configure() {

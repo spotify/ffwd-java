@@ -385,10 +385,10 @@ public class BatchingPluginSink implements PluginSink {
     if (!batch.batches.isEmpty()) {
       final List<Metric> metrics = BatchMetricConverter.convertBatchesToMetrics(batch.batches);
 
+      final List<Metric> filteredMetrics = highFrequencyDetector.detect(metrics);
       futures.add(sink
-          .sendMetrics(highFrequencyDetector.detect(metrics))
-          .onFinished(() -> batchingStatistics.reportSentBatches(batch.batches.size(),
-              batch.size())));
+          .sendMetrics(filteredMetrics)
+          .onFinished(() -> batchingStatistics.reportSentMetrics(filteredMetrics.size())));
     }
 
     // chain into batch future.

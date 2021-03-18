@@ -25,9 +25,9 @@ import static io.netty.handler.codec.http.HttpMethod.POST;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.spotify.ffwd.model.v2.Batch;
+import com.spotify.ffwd.model.v2.BatchMetadata;
 import com.spotify.ffwd.model.v2.Metric;
 import com.spotify.ffwd.model.v2.Value;
-import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufInputStream;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandler.Sharable;
@@ -39,9 +39,11 @@ import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import javax.inject.Inject;
 import javax.inject.Named;
 import org.slf4j.Logger;
@@ -49,6 +51,8 @@ import org.slf4j.LoggerFactory;
 
 @Sharable
 public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
+  private final int MAX_BATCH_SIZE = 100_000;
+  private final int MAX_INPUT_MB = 800;
 
   private static final Logger log = LoggerFactory.getLogger(HttpDecoder.class);
 
@@ -94,29 +98,58 @@ public class HttpDecoder extends MessageToMessageDecoder<FullHttpRequest> {
   private void postBatch(
       final ChannelHandlerContext ctx, final FullHttpRequest in, final List<Object> out
   ) {
-    final Object batch = convertToBatch(in);
-    out.add(batch);
+    final List<Object> batches = convertToBatches(in);
+    out.addAll(batches);
     ctx
         .channel()
         .writeAndFlush(new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK))
         .addListener((ChannelFutureListener) future -> future.channel().close());
   }
 
-  private Object convertToBatch(final FullHttpRequest in) {
+  private List<Object> convertToBatches(final FullHttpRequest in) {
     final String endPoint = in.uri();
     try (final InputStream inputStream = new ByteBufInputStream(in.content())) {
+      int inputSizeMb = inputStream.available() / 1000000;
+      if (inputSizeMb > MAX_INPUT_MB) {
+        BatchMetadata metadata = mapper.readValue(inputStream, BatchMetadata.class);
+        log.error(
+            "Input size is {}mb which is over the limit of {}mb. commonTags: {}, commonResource: {}",
+            inputSizeMb,
+            MAX_BATCH_SIZE,
+            metadata.getCommonTags(),
+            metadata.getCommonResource());
+        throw new HttpException(HttpResponseStatus.REQUEST_ENTITY_TOO_LARGE);
+      }
       if ("/v2/batch".equals(endPoint)) {
-        return mapper.readValue(inputStream, Batch.class);
+        return splitBatch(mapper.readValue(inputStream, Batch.class));
       } else {
         com.spotify.ffwd.model.Batch batch =
             mapper.readValue(inputStream, com.spotify.ffwd.model.Batch.class);
-        return convert(batch);
+        return splitBatch(convert(batch));
       }
     } catch (final IOException e) {
       log.error(
           "HTTP Bad Request. uri: {}", endPoint, e);
       throw new HttpException(HttpResponseStatus.BAD_REQUEST);
     }
+  }
+
+  private List<Object> splitBatch(Batch batch) {
+    if (batch.getPoints().size() <= MAX_BATCH_SIZE) {
+      return Collections.singletonList(batch);
+    }
+    List<Metric> points = batch.getPoints();
+    int numBatches = points.size() / MAX_BATCH_SIZE + 1;
+    log.info("Splitting input into {} batches.", numBatches);
+    return IntStream.range(0, numBatches).mapToObj(
+        n -> points.subList(n * MAX_BATCH_SIZE, n == numBatches - 1 ? points.size() : (n + 1) * MAX_BATCH_SIZE))
+        .map(
+            batchedPoints ->
+                Batch.create(
+                    Optional.of(batch.getCommonTags()),
+                    Optional.of(batch.getCommonResource()),
+                    batchedPoints))
+        .collect(Collectors.toList());
   }
 
   private Batch convert(final com.spotify.ffwd.model.Batch batch) {
